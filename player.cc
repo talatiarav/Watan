@@ -1,0 +1,326 @@
+#include "player.h"
+
+#include <algorithm> // std::random_shuffle
+#include <cstdlib>
+#include <ctime>
+#include <iostream>
+#include <sstream>
+
+#include "dice.h"
+#include "vertex.h"
+#include "edge.h"
+
+using std::cout;
+using std::endl;
+using std::string;
+
+// --- ctor ---
+
+Player::Player(Colour colour)
+    : colour{colour} {}
+
+// --- dice ---
+
+void Player::setDice(std::unique_ptr<Dice> newDice) {
+    dice = std::move(newDice);
+}
+
+int Player::rollDice() {
+    if (!dice) {
+        // default to fair dice using the factory
+        dice.reset(Dice::make_dice("fair"));
+    }
+    return dice->roll();
+}
+
+// --- resources / ownership ---
+
+void Player::addResources(Resources resource, int amount) {
+    resources[resource] += amount;
+    if (resources[resource] <= 0) {
+        resources.erase(resource);
+    }
+}
+
+int Player::numResources() const {
+    int total = 0;
+    for (auto const &entry : resources) {
+        total += entry.second;
+    }
+    return total;
+}
+
+void Player::addVertex(Vertex *v) {
+    if (!v) return;
+    ownedVertices.emplace_back(v);
+}
+
+void Player::addEdge(Edge *e) {
+    if (!e) return;
+    ownedEdges.emplace_back(e);
+}
+
+// --- saving ---
+
+std::string Player::encodeResourcesForSave() const {
+    auto getCount = [this](Resources r) {
+        auto it = resources.find(r);
+        if (it == resources.end()) return 0;
+        return it->second;
+    };
+
+    int numCaffeines = getCount(Resources::Caffeine);
+    int numLabs      = getCount(Resources::Lab);
+    int numLectures  = getCount(Resources::Lecture);
+    int numStudies   = getCount(Resources::Study);
+    int numTutorials = getCount(Resources::Tutorial);
+
+    std::ostringstream oss;
+    oss << numCaffeines << ' '
+        << numLabs      << ' '
+        << numLectures  << ' '
+        << numStudies   << ' '
+        << numTutorials;
+
+    return oss.str();
+}
+
+std::string Player::encodeGoalsForSave() const {
+    std::ostringstream oss;
+    bool first = true;
+    for (Edge *e : ownedEdges) {
+        if (!e) continue;
+        if (!first) oss << ' ';
+        first = false;
+        oss << e->getId(); // assumes Edge has getId()
+    }
+    return oss.str();
+}
+
+std::string Player::encodeVerticesForSave() const {
+    std::ostringstream oss;
+    bool first = true;
+    for (Vertex *v : ownedVertices) {
+        if (!v) continue;
+        Assessment a = v->currentAssessment();
+        int level = 0;
+        if (a == Assessment::Assignment)      level = 1;
+        else if (a == Assessment::Midterm)    level = 2;
+        else if (a == Assessment::Exam)       level = 3;
+        else                                  continue; // skip None / Achievement on vertices
+
+        if (!first) oss << ' ';
+        first = false;
+        oss << v->getId() << ' ' << level; // assumes Vertex has getId()
+    }
+    return oss.str();
+}
+
+std::string Player::encodeForSave() const {
+    std::ostringstream oss;
+    oss << encodeResourcesForSave()
+        << " g " << encodeGoalsForSave()
+        << " c " << encodeVerticesForSave();
+    return oss.str();
+}
+
+// --- points / rules ---
+
+int Player::getPoints() const {
+    int points = 0;
+    for (Vertex *v : ownedVertices) {
+        if (!v) continue;
+        Assessment a = v->currentAssessment();
+        if (a == Assessment::Assignment)      points += 1;
+        else if (a == Assessment::Midterm)    points += 2;
+        else if (a == Assessment::Exam)       points += 3;
+    }
+    return points;
+}
+
+bool Player::resourcesCheck(Assessment type) const {
+    auto get = [this](Resources r) {
+        auto it = resources.find(r);
+        if (it == resources.end()) return 0;
+        return it->second;
+    };
+
+    switch (type) {
+        case Assessment::Assignment:
+            if (get(Resources::Caffeine) < 1) return false;
+            if (get(Resources::Lab)      < 1) return false;
+            if (get(Resources::Lecture)  < 1) return false;
+            if (get(Resources::Tutorial) < 1) return false;
+            return true;
+
+        case Assessment::Midterm:
+            if (get(Resources::Lecture) < 2) return false;
+            if (get(Resources::Study)   < 3) return false;
+            return true;
+
+        case Assessment::Exam:
+            if (get(Resources::Caffeine) < 3) return false;
+            if (get(Resources::Lab)      < 2) return false;
+            if (get(Resources::Lecture)  < 2) return false;
+            if (get(Resources::Tutorial) < 1) return false;
+            if (get(Resources::Study)    < 2) return false;
+            return true;
+
+        case Assessment::Achievement:
+            if (get(Resources::Tutorial) < 1) return false;
+            if (get(Resources::Study)    < 1) return false;
+            return true;
+
+        case Assessment::None:
+        default:
+            return true;
+    }
+}
+
+void Player::resourcesSpent(Assessment type) {
+    switch (type) {
+        case Assessment::Assignment:
+            addResources(Resources::Caffeine, -1);
+            addResources(Resources::Lab,      -1);
+            addResources(Resources::Lecture,  -1);
+            addResources(Resources::Tutorial, -1);
+            break;
+
+        case Assessment::Midterm:
+            addResources(Resources::Lecture, -2);
+            addResources(Resources::Study,   -3);
+            break;
+
+        case Assessment::Exam:
+            addResources(Resources::Caffeine, -3);
+            addResources(Resources::Lab,      -2);
+            addResources(Resources::Lecture,  -2);
+            addResources(Resources::Tutorial, -1);
+            addResources(Resources::Study,    -2);
+            break;
+
+        case Assessment::Achievement:
+            addResources(Resources::Tutorial, -1);
+            addResources(Resources::Study,    -1);
+            break;
+
+        case Assessment::None:
+        default:
+            break;
+    }
+}
+
+// Geese logic (port of Student::loseResources with cleaned-up total count).
+void Player::loseResourcesToGeese(std::ostream &out) {
+    int total = numResources();
+    if (total < 10) return;
+
+    int numLost = total / 2;
+
+    out << "Student " << colour << " loses " << numLost
+        << " resources to the geese. They lose:" << endl;
+
+    // Collect keys (resource types) that we might lose.
+    std::vector<Resources> keys;
+    keys.reserve(resources.size());
+    for (auto const &entry : resources) {
+        if (entry.second > 0) {
+            keys.emplace_back(entry.first);
+        }
+    }
+
+    int lostCaffeine  = 0;
+    int lostLab       = 0;
+    int lostLecture   = 0;
+    int lostStudy     = 0;
+    int lostTutorial  = 0;
+
+    if (keys.empty()) return;
+
+    std::srand(static_cast<unsigned int>(std::time(nullptr)));
+
+    for (int i = 0; i < numLost; ++i) {
+        std::random_shuffle(keys.begin(), keys.end());
+        // find a resource type that is still available
+        while (!keys.empty() && resources[keys.front()] == 0) {
+            std::random_shuffle(keys.begin(), keys.end());
+        }
+        Resources r = keys.front();
+        resources[r] -= 1;
+
+        switch (r) {
+            case Resources::Caffeine: ++lostCaffeine; break;
+            case Resources::Lab:      ++lostLab;      break;
+            case Resources::Lecture:  ++lostLecture;  break;
+            case Resources::Study:    ++lostStudy;    break;
+            case Resources::Tutorial: ++lostTutorial; break;
+            default: break;
+        }
+    }
+
+    if (lostCaffeine  > 0) out << lostCaffeine  << " Caffeine"  << endl;
+    if (lostLab       > 0) out << lostLab       << " Lab"       << endl;
+    if (lostLecture   > 0) out << lostLecture   << " Lecture"   << endl;
+    if (lostStudy     > 0) out << lostStudy     << " Study"     << endl;
+    if (lostTutorial  > 0) out << lostTutorial  << " Tutorial"  << endl;
+
+    // Clean up any zero entries.
+    for (auto it = resources.begin(); it != resources.end(); ) {
+        if (it->second <= 0) it = resources.erase(it);
+        else ++it;
+    }
+}
+
+void Player::reset() {
+    resources.clear();
+    ownedVertices.clear();
+    ownedEdges.clear();
+    dice.reset();
+}
+
+// --- printing / status ---
+
+std::string Player::formatResourcesStatus() const {
+    auto get = [this](Resources r) {
+        auto it = resources.find(r);
+        if (it == resources.end()) return 0;
+        return it->second;
+    };
+
+    int numCaffeines = get(Resources::Caffeine);
+    int numLabs      = get(Resources::Lab);
+    int numLectures  = get(Resources::Lecture);
+    int numStudies   = get(Resources::Study);
+    int numTutorials = get(Resources::Tutorial);
+
+    std::ostringstream oss;
+    oss << numCaffeines << " caffeines, "
+        << numLabs      << " labs, "
+        << numLectures  << " lectures, "
+        << numStudies   << " studies, and "
+        << numTutorials << " tutorials";
+
+    return oss.str();
+}
+
+void Player::printStatus(std::ostream &out) const {
+    out << colour << " has "
+        << getPoints() << " course criteria, "
+        << formatResourcesStatus()
+        << std::endl;
+}
+
+void Player::printCriteria(std::ostream &out) const {
+    out << colour << " has completed:" << std::endl;
+    for (Vertex *v : ownedVertices) {
+        if (!v) continue;
+        Assessment a = v->currentAssessment();
+        int level = 0;
+        if (a == Assessment::Assignment)      level = 1;
+        else if (a == Assessment::Midterm)    level = 2;
+        else if (a == Assessment::Exam)       level = 3;
+        else                                  continue;
+
+        out << v->getId() << ' ' << level << std::endl;
+    }
+}
