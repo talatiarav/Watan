@@ -93,6 +93,8 @@ void GameBoard::initializeBoardGraph(const std::vector<int> &values,
     // Build BoardView (ASCII text display), as a port of TextDisplay.
     // TextDisplay::TextDisplay(bool, vector<int>*, vector<Resource>*) 
     // We keep local copies of values/resources inside GameBoard to pass pointers.
+
+  // Need to fix this --> will crash once the vectors are freed 
     auto valuesCopy    = std::make_shared<std::vector<int>>(values);
     auto resourcesCopy = std::make_shared<std::vector<Resources>>(resources);
 
