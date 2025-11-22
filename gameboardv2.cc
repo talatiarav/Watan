@@ -207,13 +207,13 @@ void GameBoard::completeVertex(Colour playerColour, int vertexId) {
         throw std::runtime_error("You cannot build here.");
     }
 
-    // Assignment cost: one CAFFEINE, one LAB, one LECTURE, one TUTORIAL.
     if (!p->resourcesCheck(Assessment::Assignment)) {
         throw std::runtime_error("You do not have enough resources.");
     }
 
-    v->complete(playerColour);
+    v->complete(p);
     p->resourcesSpent(Assessment::Assignment);
+    p->addVertex(v);
 }
 
 void GameBoard::improveVertex(Colour playerColour, int vertexId) {
@@ -269,13 +269,13 @@ void GameBoard::achieveEdge(Colour playerColour, int edgeId) {
         throw std::runtime_error("You cannot build here.");
     }
 
-    // Achievement cost: one STUDY and one TUTORIAL.
     if (!p->resourcesCheck(Assessment::Achievement)) {
         throw std::runtime_error("You do not have enough resources.");
     }
 
-    e->achieve(playerColour);
+    e->achieve(p);
     p->resourcesSpent(Assessment::Achievement);
+    p->addEdge(e);
 }
 
 void GameBoard::moveGeese(Colour /*activePlayer*/, int tileId) {
