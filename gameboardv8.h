@@ -62,6 +62,10 @@ public:
     // For SaveManager: read-only access to players (fixed order: Blue, Red, Orange, Yellow).
     const std::vector<std::unique_ptr<Player>> &getPlayers() const { return players; }
 
+    Player *getPlayer(Colour colour);
+    const Player *getPlayer(Colour colour) const;
+
+
 
 private:
     // Players are always in fixed order: Blue, Red, Orange, Yellow.
