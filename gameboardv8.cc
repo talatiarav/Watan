@@ -798,3 +798,52 @@ const Edge *GameBoard::getEdge(int edgeId) const {
     }
     return edges[edgeId].get();
 }
+
+
+void GameBoard::setRoadForLoad(Colour playerColour, int edgeId) {
+    Player *p = findPlayer(playerColour);
+    if (!p) {
+        throw std::runtime_error("setRoadForLoad: unknown player colour.");
+    }
+
+    Edge *e = getEdge(edgeId);
+    if (!e) {
+        throw std::runtime_error("setRoadForLoad: invalid edge id.");
+    }
+
+    // We assume Edge::achieve just sets ownership + notifies view
+    // and does NOT spend resources or check legality.
+    e->achieve(p);
+    p->addEdge(e);
+}
+
+void GameBoard::setResidenceForLoad(Colour playerColour,
+                                    int vertexId,
+                                    Assessment level) {
+    Player *p = findPlayer(playerColour);
+    if (!p) {
+        throw std::runtime_error("setResidenceForLoad: unknown player colour.");
+    }
+
+    Vertex *v = getVertex(vertexId);
+    if (!v) {
+        throw std::runtime_error("setResidenceForLoad: invalid vertex id.");
+    }
+
+    // Build up to the desired level without spending resources.
+    // complete() should set owner + base level;
+    // improve() should bump the level and adjust points, but not touch resources.
+    if (level == Assessment::Assignment) {
+        v->complete(p);
+        p->addVertex(v);
+    } else if (level == Assessment::Midterm) {
+        v->complete(p);
+        p->addVertex(v);
+        v->improve();
+    } else if (level == Assessment::Exam) {
+        v->complete(p);
+        p->addVertex(v);
+        v->improve();
+        v->improve();
+    }
+}
