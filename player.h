@@ -111,6 +111,14 @@ public:
     // "<Caff> <Lab> <Lect> <Study> <Tut> g <edges...> c <vertex level>..."
     std::string encodeForSave() const;
 
+        // For SaveManager: overwrite this player's resources with the given counts.
+    void setResourcesFromSave(int caffeines,
+                              int labs,
+                              int lectures,
+                              int studies,
+                              int tutorials);
+
+
 
 private:
     // Helper to format the resource counts as a human-readable string.
