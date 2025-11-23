@@ -12,6 +12,8 @@
 #include "edge.h"
 #include "assessment.h"
 #include "resources.h"
+#include "fair.h"
+#include "loaded.h"
 
 using std::cout;
 using std::endl;
@@ -424,4 +426,32 @@ void Player::removeResource(Resources r, int amount) {
     } else {
         it->second -= amount;
     }
+}
+
+// dice methods
+void Player::useFairDice() {
+    dice = std::make_unique<Fair>();
+}
+
+void Player::useLoadedDice() {
+    dice = std::make_unique<Loaded>();
+}
+
+bool Player::isLoadedDice() const {
+    // dynamic_cast is fine here; only two concrete types.
+    return dynamic_cast<Loaded *>(dice.get()) != nullptr;
+}
+
+void Player::setLoadedRoll(int value) {
+    if (auto *ld = dynamic_cast<Loaded *>(dice.get())) {
+        ld->setDie(value);
+    }
+}
+
+int Player::rollDice() {
+    if (!dice) {
+        // default to fair if somehow not set
+        dice = std::make_unique<Fair>();
+    }
+    return dice->roll();
 }
