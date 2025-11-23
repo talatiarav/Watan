@@ -54,6 +54,10 @@ public:
     //  "<res0> <val0> <res1> <val1> ... <res18> <val18>"
     // with res codes: 0=Caff,1=Lab,2=Lect,3=Study,4=Tut,5=Netflix
     std::string encodeBoardLayoutForSave() const;
+
+    // Load-only helpers: set edges/vertices from save without resource checks.
+    void setRoadForLoad(Colour owner, int edgeId);
+    void setResidenceForLoad(Colour owner, int vertexId, Assessment level);
     
     // For SaveManager: read-only access to players (fixed order: Blue, Red, Orange, Yellow).
     const std::vector<std::unique_ptr<Player>> &getPlayers() const { return players; }
