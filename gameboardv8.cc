@@ -847,3 +847,11 @@ void GameBoard::setResidenceForLoad(Colour playerColour,
         v->improve();
     }
 }
+
+Player *GameBoard::getPlayer(Colour colour) {
+    return findPlayer(colour);
+}
+
+const Player *GameBoard::getPlayer(Colour colour) const {
+    return findPlayer(colour);
+}
