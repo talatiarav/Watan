@@ -72,6 +72,21 @@ public:
         return players;
     }
 
+    // ----- Save/load helpers for SaveManager -----
+
+    // Encodes the board layout in the watan-savefile format:
+    //  "<res0> <val0> <res1> <val1> ... <res18> <val18>"
+    // where res is:
+    //  0 = CAFFEINE, 1 = LAB, 2 = LECTURE, 3 = STUDY, 4 = TUTORIAL, 5 = NETFLIX.
+    std::string encodeBoardLayoutForSave() const;
+
+    // Where the geese currently are (-1 if nowhere).
+    int getGeeseTile() const { return geeseTile; }
+
+    // Read-only access to players for SaveManager (to call encodeForSave()).
+    const std::vector<std::unique_ptr<Player>> &getPlayers() const { return players; }
+
+
 private:
     int geeseTile; // -1 means not placed yet
 
