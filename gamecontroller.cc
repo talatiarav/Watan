@@ -5,6 +5,8 @@
 #include <stdexcept>
 
 #include "gameboard.h"
+#include "savemanager.h"
+
 
 using std::endl;
 
@@ -255,21 +257,17 @@ void GameController::cmdAchieve(int edgeId, std::ostream &out) {
     }
 }
 
-// --- save (stub for now) ---
+// --- save
 
 void GameController::cmdSave(const std::string &filename, std::ostream &out) {
-    // TODO: hook into a SaveManager that writes:
-    //   <curTurn>
-    //   <student0Data>
-    //   <student1Data>
-    //   <student2Data>
-    //   <student3Data>
-    //   <board>
-    //   <geese>
-    //
-    // For now, just acknowledge the command.
-    out << "Saving to '" << filename << "' is not implemented yet." << endl;
+    try {
+        SaveManager::saveGame(board, currentPlayer, filename);
+        out << "Saved game to '" << filename << "'." << endl;
+    } catch (const std::exception &e) {
+        out << e.what() << endl;
+    }
 }
+
 
 // --- winner check ---
 
