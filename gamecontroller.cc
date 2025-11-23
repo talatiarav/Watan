@@ -134,7 +134,11 @@ void GameController::handleCommand(const std::string &line,
     } else if (cmd == "criteria") {
         cmdCriteria(out);
     } else if (cmd == "roll") {
-        cmdRoll(out);
+        cmdRoll(in, out);
+    } else if (cmd == "load") {
+        cmdSetLoadedDice(out);
+    } else if (cmd == "fair") {
+        cmdSetFairDice(out);
     } else if (cmd == "geese") {
         int tileId;
         if (!(iss >> tileId)) {
@@ -226,6 +230,38 @@ void GameController::cmdRoll(std::ostream &out) {
         out << "You must move the GEESE before rolling again." << endl;
         return;
     }
+
+    Player *p = board.getPlayer(currentPlayer);
+    if (!p) {
+        throw std::runtime_error("roll: unknown current player.");
+    }
+
+    // If using loaded dice, ask for a value between 2 and 12.
+    if (p->isLoadedDice()) {
+        int toLoad;
+        while (true) {
+            out << "Input a roll between 2 and 12:" << std::endl;
+            out << "> ";
+            if (!(in >> toLoad)) {
+                // bad input: clear and ignore one token
+                in.clear();
+                std::string junk;
+                in >> junk;
+                out << "Invalid input." << std::endl;
+                continue;
+            }
+            if (toLoad < 2 || toLoad > 12) {
+                out << "Invalid roll." << std::endl;
+                continue;
+            }
+            break;
+        }
+        p->setLoadedRoll(toLoad);
+
+        // Consume the leftover newline so the next std::getline in run() works:
+        in.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    }
+
 
     int roll = board.rollDice(currentPlayer);
     rolledThisTurn = true;
@@ -424,4 +460,22 @@ void GameController::checkForWinner(std::ostream &out) {
             << " has reached 10 course criteria!" << endl;
         quitRequested = true;
     }
+}
+
+void GameController::cmdSetFairDice(std::ostream &out) {
+    Player *p = board.getPlayer(currentPlayer);
+    if (!p) {
+        throw std::runtime_error("fair: unknown current player.");
+    }
+    p->useFairDice();
+    out << "Using fair dice this turn." << std::endl;
+}
+
+void GameController::cmdSetLoadedDice(std::ostream &out) {
+    Player *p = board.getPlayer(currentPlayer);
+    if (!p) {
+        throw std::runtime_error("load: unknown current player.");
+    }
+    p->useLoadedDice();
+    out << "Using loaded dice this turn." << std::endl;
 }
