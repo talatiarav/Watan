@@ -87,7 +87,7 @@ void GameController::run(std::istream &in, std::ostream &out) {
         if (line.empty()) continue;
 
         try {
-            handleCommand(line, out);
+            handleCommand(line, in, out);
         } catch (const std::exception &e) {
             // GameBoard throws with spec strings for build/resource errors,
             // so just print the message.
@@ -107,11 +107,22 @@ void GameController::run(std::istream &in, std::ostream &out) {
 
 // --- command parsing ---
 
-void GameController::handleCommand(const std::string &line, std::ostream &out) {
+void GameController::handleCommand(const std::string &line,
+                                   std::istream &in,
+                                   std::ostream &out) {
     std::istringstream iss(line);
     std::string cmd;
     iss >> cmd;
+
     if (cmd.empty()) return;
+
+    if (cmd == "trade") {
+        std::string targetStr, giveStr, takeStr;
+        if (!(iss >> targetStr >> giveStr >> takeStr)) {
+            out << "Usage: trade <player>|bank <give> <take>\n";
+            return;
+        }
+        cmdTrade(targetStr, giveStr, takeStr, in, out);
 
     // Normalize to lowercase if you want; for now assume lower-case input.
     if (cmd == "help") {
@@ -291,6 +302,116 @@ void GameController::cmdSave(const std::string &filename, std::ostream &out) {
     } catch (const std::exception &e) {
         out << e.what() << endl;
     }
+}
+
+void GameController::cmdTrade(const std::string &targetStr,
+                              const std::string &giveStr,
+                              const std::string &takeStr,
+                              std::istream &in,
+                              std::ostream &out) {
+    bool bankTrade = false;
+    Colour otherColour;
+
+    if (targetStr == "bank" || targetStr == "Bank") {
+        bankTrade = true;
+    } else if (!parseColour(targetStr, otherColour)) {
+        out << "Invalid player. Valid players: Blue, Red, Orange, Yellow, bank\n";
+        return;
+    }
+
+    Resources give, take;
+    if (!parseResource(giveStr, give)) {
+        out << "Invalid resource to give. Valid: Caffeine, Lab, Lecture, Study, Tutorial\n";
+        return;
+    }
+    if (!parseResource(takeStr, take)) {
+        out << "Invalid resource to take. Valid: Caffeine, Lab, Lecture, Study, Tutorial\n";
+        return;
+    }
+
+    Player *me = board.getPlayer(currentPlayer);
+    if (!me) {
+        throw std::runtime_error("Internal error: current player not found");
+    }
+
+    // ----- Bank trade: 4 of give for 1 of take -----
+    if (bankTrade) {
+        if (me->getResourceCount(give) < 4) {
+            out << "Student " << currentPlayer << " does not have enough "
+                << give << " to trade with the bank. Trade unsuccessful.\n";
+            return;
+        }
+
+        out << "Student " << currentPlayer << " wants to trade four " << give
+            << " for one " << take << " with the bank. Confirm this trade?\n";
+        out << "> ";
+
+        std::string answer;
+        in >> answer;
+        while (answer != "yes" && answer != "no") {
+            out << "Please confirm with yes or no.\n";
+            out << "> ";
+            in >> answer;
+        }
+        if (answer == "no") {
+            out << "Trade unsuccessful.\n";
+            return;
+        }
+
+        me->removeResource(give, 4);
+        me->addResource(take, 1);
+        out << "Trade successful.\n";
+        return;
+    }
+
+    // ----- Player-to-player trade -----
+    if (otherColour == currentPlayer) {
+        out << "You cannot trade with yourself.\n";
+        return;
+    }
+
+    Player *other = board.getPlayer(otherColour);
+    if (!other) {
+        out << "Unknown player.\n";
+        return;
+    }
+
+    if (me->getResourceCount(give) < 1) {
+        out << "Student " << currentPlayer << " does not have enough "
+            << give << " to trade. Trade unsuccessful.\n";
+        return;
+    }
+    if (other->getResourceCount(take) < 1) {
+        out << "Student " << otherColour << " does not have enough "
+            << take << " to trade. Trade unsuccessful.\n";
+        return;
+    }
+
+    out << "Student " << currentPlayer << " offers Student " << otherColour
+        << " one " << give << " for one " << take
+        << ". Does Student " << otherColour << " accept this offer?\n";
+    out << "> ";
+
+    std::string answer;
+    in >> answer;
+    while (answer != "yes" && answer != "no") {
+        out << "Please accept or decline the trade offer with yes or no.\n";
+        out << "> ";
+        in >> answer;
+    }
+    if (answer == "no") {
+        out << "Trade unsuccessful.\n";
+        return;
+    }
+
+    // Perform swap
+    me->removeResource(give, 1);
+    other->addResource(give, 1);
+
+    other->removeResource(take, 1);
+    me->addResource(take, 1);
+
+    out << "Trade successful.\n";
 }
 
 
