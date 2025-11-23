@@ -43,7 +43,15 @@ public:
     Colour getColour() const { return colour; }
 
     // Replace this player’s dice with a new dice object.
+    // EDIT: I'm not sure if we need this particularly since i've also added the functions below which
+    // characterizes the dice effectively
     void setDice(std::unique_ptr<Dice> newDice);
+
+        // Dice control
+    void useFairDice();
+    void useLoadedDice();
+    bool isLoadedDice() const;
+    void setLoadedRoll(int value);   // only meaningful if currently using loaded dice
 
     // Rolls this player’s dice. If no dice yet, defaults to fair.
     int rollDice();
