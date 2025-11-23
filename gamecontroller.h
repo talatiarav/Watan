@@ -24,6 +24,8 @@ public:
     // Takes ownership of an already-constructed GameBoard.
     explicit GameController(GameBoard &&board);
 
+    GameController(GameBoard &&board, Colour startingPlayer);
+
     // Main game loop: reads commands until a winner, quit, or EOF.
     void run(std::istream &in, std::ostream &out);
 
