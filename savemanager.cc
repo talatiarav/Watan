@@ -6,12 +6,13 @@
 #include <vector>
 
 #include "gameboard.h"
-#include "player.h"   // for Player::encodeForSave once you add it
 #include "resources.h"
+#include "player.h"
+#include "assessment.h"
 
 namespace {
 
-// fixed order mapping for first line
+// 0=Blue,1=Red,2=Orange,3=Yellow
 int colourToIndex(Colour c) {
     switch (c) {
         case Colour::Blue:   return 0;
@@ -32,6 +33,85 @@ Colour indexToColour(int idx) {
     }
 }
 
+// Map save-file resource codes to Resources:
+// 0 = CAFFEINE, 1 = LAB, 2 = LECTURE, 3 = STUDY, 4 = TUTORIAL, 5 = NETFLIX
+Resources codeToResource(int code) {
+    switch (code) {
+        case 0: return Resources::Caffeine;
+        case 1: return Resources::Lab;
+        case 2: return Resources::Lecture;
+        case 3: return Resources::Study;
+        case 4: return Resources::Tutorial;
+        case 5: return Resources::Netflix;
+        default:
+            throw std::runtime_error("Invalid resource code in board layout.");
+    }
+}
+
+Assessment levelToAssessment(int level) {
+    switch (level) {
+        case 1: return Assessment::Assignment;
+        case 2: return Assessment::Midterm;
+        case 3: return Assessment::Exam;
+        default:
+            throw std::runtime_error("Invalid criterion level in save file.");
+    }
+}
+
+// Parsed data for one player's line
+struct PlayerSaveData {
+    int caff   = 0;
+    int lab    = 0;
+    int lect   = 0;
+    int study  = 0;
+    int tut    = 0;
+    std::vector<int> edgeIds;
+    std::vector<std::pair<int,int>> vertexLevels; // (vertexId, level)
+};
+
+PlayerSaveData parsePlayerLine(const std::string &line) {
+    PlayerSaveData data;
+    std::istringstream iss{line};
+
+    if (!(iss >> data.caff >> data.lab >> data.lect >> data.study >> data.tut)) {
+        throw std::runtime_error("Malformed player line in save file (resources).");
+    }
+
+    std::string tok;
+    enum class Section { None, Goals, Criteria };
+    Section section = Section::None;
+    int pendingVertexId = -1;
+
+    while (iss >> tok) {
+        if (tok == "g") {
+            section = Section::Goals;
+        } else if (tok == "c") {
+            section = Section::Criteria;
+            pendingVertexId = -1;
+        } else if (section == Section::Goals) {
+            // edge id
+            data.edgeIds.push_back(std::stoi(tok));
+        } else if (section == Section::Criteria) {
+            // alternating: vertexId, level
+            if (pendingVertexId == -1) {
+                pendingVertexId = std::stoi(tok);
+            } else {
+                int level = std::stoi(tok);
+                data.vertexLevels.emplace_back(pendingVertexId, level);
+                pendingVertexId = -1;
+            }
+        } else {
+            // token before 'g' – shouldn't happen in valid saves, but ignore
+        }
+    }
+
+    if (section == Section::Criteria && pendingVertexId != -1) {
+        throw std::runtime_error("Unpaired vertex id in criteria section.");
+    }
+
+    return data;
+}
+
 } // namespace
 
 void SaveManager::saveGame(const GameBoard &board,
@@ -46,19 +126,15 @@ void SaveManager::saveGame(const GameBoard &board,
     out << colourToIndex(currentPlayer) << '\n';
 
     // Lines 2–5: players, in fixed order: Blue, Red, Orange, Yellow.
-    // We rely on GameBoard keeping players in that order.
     const auto &players = board.getPlayers();
     if (players.size() != 4) {
         throw std::runtime_error("SaveManager::saveGame: expected 4 players.");
     }
 
     for (const auto &p : players) {
-        // TODO: ensure your new Player class has:
-        //   std::string encodeForSave() const;
-        //
-        // that returns:
-        //   "<numCaffeines> <numLabs> <numLectures> <numStudies> <numTutorials> "
-        //   "g <goalIds...> c <criterionId state>..."
+        // Player::encodeForSave() must return:
+        // "<numCaffeines> <numLabs> <numLectures> <numStudies> <numTutorials> "
+        // "g <goalIds...> c <criterionId state>..."
         out << p->encodeForSave() << '\n';
     }
 
@@ -92,8 +168,9 @@ GameBoard SaveManager::loadGame(bool enhance,
         currentPlayerOut = indexToColour(idx);
     }
 
-    // Lines 2–5: player lines (we’ll just read them for now)
+    // Lines 2–5: per-player lines
     std::vector<std::string> playerLines;
+    playerLines.reserve(4);
     for (int i = 0; i < 4; ++i) {
         if (!std::getline(in, line)) {
             throw std::runtime_error("Save file is missing player lines.");
@@ -105,24 +182,14 @@ GameBoard SaveManager::loadGame(bool enhance,
     if (!std::getline(in, line)) {
         throw std::runtime_error("Save file is missing board layout line.");
     }
+
     std::istringstream boardIss{line};
     std::vector<int> values;
     std::vector<Resources> resources;
 
     int resCode, val;
     while (boardIss >> resCode >> val) {
-        Resources r;
-        switch (resCode) {
-            case 0: r = Resources::Caffeine; break;
-            case 1: r = Resources::Lab;      break;
-            case 2: r = Resources::Lecture;  break;
-            case 3: r = Resources::Study;    break;
-            case 4: r = Resources::Tutorial; break;
-            case 5: r = Resources::Netflix;  break;
-            default:
-                throw std::runtime_error("Invalid resource code in board layout.");
-        }
-        resources.push_back(r);
+        resources.push_back(codeToResource(resCode));
         values.push_back(val);
     }
 
@@ -130,7 +197,7 @@ GameBoard SaveManager::loadGame(bool enhance,
         throw std::runtime_error("Expected 19 tiles in board layout line.");
     }
 
-    // Line 7: geese tile (we'll apply it after constructing the board)
+    // Line 7: geese tile index
     if (!std::getline(in, line)) {
         throw std::runtime_error("Save file is missing geese line.");
     }
@@ -142,32 +209,47 @@ GameBoard SaveManager::loadGame(bool enhance,
         }
     }
 
-    // --- Construct base GameBoard from layout ---
+    // --- Construct the base GameBoard from tile layout ---
     GameBoard board{enhance, values, resources};
 
-    // --- TODO: reconstruct players & buildings from playerLines ---
-    //
-    // For each i in [0..3]:
-    //   - parse playerLines[i] into:
-    //       numCaff, numLab, numLect, numStudy, numTut,
-    //       list of edge IDs (after "g"),
-    //       list of (vertexId, level) pairs (after "c")
-    //   - for resources, call something like:
-    //       player->resetState();
-    //       player->grantResources(Resources::Caffeine, numCaff);
-    //       ...
-    //   - for each edgeId, call:
-    //       board.achieveEdge(colourForIndex(i), edgeId);   // or a "silent" variant that doesn't deduct resources
-    //   - for each (vertexId, level), call:
-    //       board.completeVertex(...) / improveVertex(...) enough times,
-    //       or provide a direct "setAssessmentLevel" API on Vertex/Player.
-    //
-    // Because we haven't finalized those direct reconstruction APIs yet, this
-    // part is left as an exercise to hook up once Player/Vertex/Edge are done.
+    // --- Rebuild players' resources, roads, and residences ---
+    auto &players = const_cast<std::vector<std::unique_ptr<Player>>&>(board.getPlayers());
+    if (players.size() != 4) {
+        throw std::runtime_error("SaveManager::loadGame: expected 4 players in board.");
+    }
+
+    for (int i = 0; i < 4; ++i) {
+        PlayerSaveData data = parsePlayerLine(playerLines[i]);
+
+        Player *p = players[i].get();
+        Colour colour = indexToColour(i);
+
+        // 1. Resources
+        p->setResourcesFromSave(
+            data.caff,
+            data.lab,
+            data.lect,
+            data.study,
+            data.tut
+        );
+
+        // 2. Roads (edges)
+        for (int edgeId : data.edgeIds) {
+            board.setRoadForLoad(colour, edgeId);
+        }
+
+        // 3. Residences (vertices)
+        for (auto &pair : data.vertexLevels) {
+            int vertexId = pair.first;
+            int level    = pair.second;
+            Assessment a = levelToAssessment(level);
+            board.setResidenceForLoad(colour, vertexId, a);
+        }
+    }
 
     // Apply geese position if any
     if (geeseIndex >= 0) {
-        // We ignore the activePlayer in moveGeese here, so we can pass anything.
+        // moveGeese ignores activePlayer for legality, so any colour is fine here.
         board.moveGeese(Colour::Blue, geeseIndex);
     }
 
