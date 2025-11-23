@@ -6,13 +6,14 @@
 
 #include "gameboard.h"
 
-using std::cout;
 using std::endl;
 
 GameController::GameController(GameBoard &&b)
-    : board(ownedBoard),
-      ownedBoard(std::move(b)),
-      currentPlayer(Colour::Blue) {}
+    : board(std::move(b)),
+      currentPlayer(Colour::Blue),
+      rolledThisTurn(false),
+      awaitingGeesePlacement(false),
+      quitRequested(false) {}
 
 // --- static helpers ---
 
@@ -31,7 +32,12 @@ std::string GameController::colourToString(Colour c) {
 void GameController::startNewTurn(std::ostream &out) {
     rolledThisTurn = false;
     awaitingGeesePlacement = false;
+
     out << "Student " << colourToString(currentPlayer) << "'s turn." << endl;
+
+    // Spec says: "followed by the status of the student".
+    // Our GameBoard::printStatus prints all students, which is fine / even nicer.
+    board.printStatus(out);
 }
 
 void GameController::advancePlayer() {
@@ -52,13 +58,21 @@ void GameController::run(std::istream &in, std::ostream &out) {
     std::string line;
     while (!quitRequested && !board.hasWinner() && std::getline(in, line)) {
         if (line.empty()) continue;
-        handleCommand(line, in, out);
+
+        try {
+            handleCommand(line, out);
+        } catch (const std::exception &e) {
+            // GameBoard throws with spec strings for build/resource errors,
+            // so just print the message.
+            out << e.what() << endl;
+        }
+
+        // If winner was detected inside a command, we drop out of loop next iteration.
     }
 
     if (board.hasWinner()) {
         Colour winner = board.getWinner();
-        out << "Student " << colourToString(winner)
-            << " wins the game!" << endl;
+        out << "Student " << colourToString(winner) << " wins the game!" << endl;
     } else if (quitRequested) {
         out << "Game ended by user." << endl;
     }
@@ -66,105 +80,89 @@ void GameController::run(std::istream &in, std::ostream &out) {
 
 // --- command parsing ---
 
-void GameController::handleCommand(const std::string &line,
-                                   std::istream &in,
-                                   std::ostream &out) {
+void GameController::handleCommand(const std::string &line, std::ostream &out) {
     std::istringstream iss(line);
     std::string cmd;
     iss >> cmd;
     if (cmd.empty()) return;
 
-    try {
-        if (cmd == "help") {
-            cmdHelp(out);
-        } else if (cmd == "board") {
-            cmdBoard(out);
-        } else if (cmd == "status") {
-            cmdStatus(out);
-        } else if (cmd == "criteria") {
-            cmdCriteria(out);
-        } else if (cmd == "roll") {
-            cmdRoll(out);
-        } else if (cmd == "geese") {
-            int tileId;
-            if (!(iss >> tileId)) {
-                out << "Usage: geese <tileId>" << endl;
-            } else {
-                cmdGeese(tileId, out);
-            }
-        } else if (cmd == "build-res") {
-            int vertexId;
-            if (!(iss >> vertexId)) {
-                out << "Usage: build-res <vertexId>" << endl;
-            } else {
-                cmdBuildResidence(vertexId, out);
-            }
-        } else if (cmd == "improve") {
-            int vertexId;
-            if (!(iss >> vertexId)) {
-                out << "Usage: improve <vertexId>" << endl;
-            } else {
-                cmdImprove(vertexId, out);
-            }
-        } else if (cmd == "build-road") {
-            int edgeId;
-            if (!(iss >> edgeId)) {
-                out << "Usage: build-road <edgeId>" << endl;
-            } else {
-                cmdBuildRoad(edgeId, out);
-            }
-        } else if (cmd == "save") {
-            std::string filename;
-            if (!(iss >> filename)) {
-                out << "Usage: save <filename>" << endl;
-            } else {
-                cmdSave(filename, out);
-            }
-        } else if (cmd == "load") {
-            std::string filename;
-            if (!(iss >> filename)) {
-                out << "Usage: load <filename>" << endl;
-            } else {
-                cmdLoad(filename, out);
-            }
-        } else if (cmd == "next") {
-            if (!rolledThisTurn) {
-                out << "You must roll before ending your turn." << endl;
-            } else if (awaitingGeesePlacement) {
-                out << "You must move the GEESE before ending your turn." << endl;
-            } else {
-                advancePlayer();
-                startNewTurn(out);
-            }
-        } else if (cmd == "quit") {
-            quitRequested = true;
+    // Normalize to lowercase if you want; for now assume lower-case input.
+    if (cmd == "help") {
+        cmdHelp(out);
+    } else if (cmd == "board") {
+        cmdBoard(out);
+    } else if (cmd == "status") {
+        cmdStatus(out);
+    } else if (cmd == "criteria") {
+        cmdCriteria(out);
+    } else if (cmd == "roll") {
+        cmdRoll(out);
+    } else if (cmd == "geese") {
+        int tileId;
+        if (!(iss >> tileId)) {
+            out << "Invalid command." << endl;
         } else {
-            out << "Unknown command: " << cmd << ". Type 'help' for options." << endl;
+            cmdGeese(tileId, out);
         }
-    } catch (const std::exception &e) {
-        out << e.what() << endl;
-    } catch (const char *msg) {
-        out << msg << endl;
+    } else if (cmd == "complete") {
+        int vertexId;
+        if (!(iss >> vertexId)) {
+            out << "Invalid command." << endl;
+        } else {
+            cmdComplete(vertexId, out);
+        }
+    } else if (cmd == "improve") {
+        int vertexId;
+        if (!(iss >> vertexId)) {
+            out << "Invalid command." << endl;
+        } else {
+            cmdImprove(vertexId, out);
+        }
+    } else if (cmd == "achieve") {
+        int edgeId;
+        if (!(iss >> edgeId)) {
+            out << "Invalid command." << endl;
+        } else {
+            cmdAchieve(edgeId, out);
+        }
+    } else if (cmd == "save") {
+        std::string filename;
+        if (!(iss >> filename)) {
+            out << "Invalid command." << endl;
+        } else {
+            cmdSave(filename, out);
+        }
+    } else if (cmd == "next") {
+        if (!rolledThisTurn) {
+            out << "You must roll before ending your turn." << endl;
+        } else if (awaitingGeesePlacement) {
+            out << "You must move the GEESE before ending your turn." << endl;
+        } else {
+            advancePlayer();
+            startNewTurn(out);
+        }
+    } else if (cmd == "quit") {
+        quitRequested = true;
+    } else {
+        out << "Invalid command." << endl;
     }
 }
 
 // --- individual commands ---
 
 void GameController::cmdHelp(std::ostream &out) const {
-    out << "Available commands:\n"
-        << "  help                 - show this help\n"
-        << "  board                - print the game board\n"
-        << "  status               - print all students' status\n"
-        << "  criteria             - print current student's completed criteria\n"
-        << "  roll                 - roll dice for current student\n"
-        << "  geese <tileId>       - move geese to tile after rolling a 7\n"
-        << "  build-res <vertex>   - build a residence at the given vertex\n"
-        << "  improve <vertex>     - upgrade a residence at the given vertex\n"
-        << "  build-road <edge>    - build a road (goal) on the given edge\n"
-        << "  save <file>          - save the current game (TODO)\n"
-        << "  load <file>          - load a saved game (TODO)\n"
-        << "  next                 - end your turn\n"
-        << "  quit                 - exit the game\n";
+    out << "Valid commands:\n"
+        << "board\n"
+        << "status\n"
+        << "criteria\n"
+        << "achieve <goal>\n"
+        << "complete <criterion>\n"
+        << "improve <criterion>\n"
+        // trade not yet implemented in this refactor:
+        // << "trade <colour> <give> <take>\n"
+        << "next\n"
+        << "save <file>\n"
+        << "help" << endl;
 }
 
 void GameController::cmdBoard(std::ostream &out) const {
@@ -191,13 +189,14 @@ void GameController::cmdRoll(std::ostream &out) {
         return;
     }
 
-    int roll = board.rollDice(currentPlayer);  // <- GameBoard::rollDice should return int now
+    int roll = board.rollDice(currentPlayer);
     rolledThisTurn = true;
 
     if (roll == 7) {
         awaitingGeesePlacement = true;
         out << "Student " << colourToString(currentPlayer)
-            << ", choose where to place the GEESE (use 'geese <tileId>')." << endl;
+            << ", choose where to place the GEESE." << endl;
+        // GameController will then expect a 'geese <tileId>' command.
     }
 }
 
@@ -211,8 +210,7 @@ void GameController::cmdGeese(int tileId, std::ostream &out) {
         board.moveGeese(currentPlayer, tileId);
         awaitingGeesePlacement = false;
 
-        // Optionally: handle stealing here using board.getStealableColoursOnTile(...)
-        // For now we just move the geese.
+        // Optional: show potential stealing targets.
         auto stealable = board.getStealableColoursOnTile(tileId, currentPlayer);
         if (!stealable.empty()) {
             out << "You may steal from: ";
@@ -223,7 +221,6 @@ void GameController::cmdGeese(int tileId, std::ostream &out) {
             out << "." << endl;
             out << "(Stealing logic not implemented yet.)" << endl;
         }
-
     } catch (const std::exception &e) {
         out << e.what() << endl;
     }
@@ -231,7 +228,7 @@ void GameController::cmdGeese(int tileId, std::ostream &out) {
 
 // --- build / improve ---
 
-void GameController::cmdBuildResidence(int vertexId, std::ostream &out) {
+void GameController::cmdComplete(int vertexId, std::ostream &out) {
     try {
         board.completeVertex(currentPlayer, vertexId);
         checkForWinner(out);
@@ -249,7 +246,7 @@ void GameController::cmdImprove(int vertexId, std::ostream &out) {
     }
 }
 
-void GameController::cmdBuildRoad(int edgeId, std::ostream &out) {
+void GameController::cmdAchieve(int edgeId, std::ostream &out) {
     try {
         board.achieveEdge(currentPlayer, edgeId);
         checkForWinner(out);
@@ -258,16 +255,20 @@ void GameController::cmdBuildRoad(int edgeId, std::ostream &out) {
     }
 }
 
-// --- save / load (stubs for now) ---
+// --- save (stub for now) ---
 
 void GameController::cmdSave(const std::string &filename, std::ostream &out) {
-    // TODO: hook into SaveManager once we define it.
+    // TODO: hook into a SaveManager that writes:
+    //   <curTurn>
+    //   <student0Data>
+    //   <student1Data>
+    //   <student2Data>
+    //   <student3Data>
+    //   <board>
+    //   <geese>
+    //
+    // For now, just acknowledge the command.
     out << "Saving to '" << filename << "' is not implemented yet." << endl;
-}
-
-void GameController::cmdLoad(const std::string &filename, std::ostream &out) {
-    // TODO: hook into SaveManager once we define it.
-    out << "Loading from '" << filename << "' is not implemented yet." << endl;
 }
 
 // --- winner check ---
@@ -277,6 +278,6 @@ void GameController::checkForWinner(std::ostream &out) {
         Colour winner = board.getWinner();
         out << "Student " << colourToString(winner)
             << " has reached 10 course criteria!" << endl;
-        quitRequested = true; // run() will print final message too
+        quitRequested = true;
     }
 }
