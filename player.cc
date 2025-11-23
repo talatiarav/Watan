@@ -5,6 +5,7 @@
 #include <ctime>
 #include <iostream>
 #include <sstream>
+#include <map>
 
 #include "dice.h"
 #include "vertex.h"
@@ -377,3 +378,30 @@ void Player::printCriteria(std::ostream &out) const {
         out << v->getId() << ' ' << level << std::endl;
     }
 }
+
+
+void Player::setResourcesFromSave(int caffeines,
+                                  int labs,
+                                  int lectures,
+                                  int studies,
+                                  int tutorials) {
+    resources.clear();
+
+    if (caffeines > 0) {
+        resources[Resources::Caffeine] = caffeines;
+    }
+    if (labs > 0) {
+        resources[Resources::Lab] = labs;
+    }
+    if (lectures > 0) {
+        resources[Resources::Lecture] = lectures;
+    }
+    if (studies > 0) {
+        resources[Resources::Study] = studies;
+    }
+    if (tutorials > 0) {
+        resources[Resources::Tutorial] = tutorials;
+    }
+    // Netflix is never stored as a "card" in the save format.
+}
+
