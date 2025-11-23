@@ -45,6 +45,20 @@ public:
     std::vector<Colour> getStealableColoursOnTile(int tileId,
                                                   Colour active) const;
 
+    // ----- Save/load helpers -----
+
+    // Where the geese currently are (-1 if nowhere).
+    int getGeeseTile() const { return geeseTile; }
+
+    // Board layout in watan-savefile format:
+    //  "<res0> <val0> <res1> <val1> ... <res18> <val18>"
+    // with res codes: 0=Caff,1=Lab,2=Lect,3=Study,4=Tut,5=Netflix
+    std::string encodeBoardLayoutForSave() const;
+    
+    // For SaveManager: read-only access to players (fixed order: Blue, Red, Orange, Yellow).
+    const std::vector<std::unique_ptr<Player>> &getPlayers() const { return players; }
+
+
 private:
     // Players are always in fixed order: Blue, Red, Orange, Yellow.
     std::vector<std::unique_ptr<Player>> players;
