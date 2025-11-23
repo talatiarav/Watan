@@ -10,12 +10,15 @@
 
 using std::endl;
 
-GameController::GameController(GameBoard &&b)
+GameController::GameController(GameBoard &&b, Colour startingPlayer)
     : board(std::move(b)),
-      currentPlayer(Colour::Blue),
+      currentPlayer(startingPlayer),
       rolledThisTurn(false),
       awaitingGeesePlacement(false),
       quitRequested(false) {}
+
+GameController::GameController(GameBoard &&b)
+    : GameController(std::move(b), Colour::Blue) {}  // your old behavior
 
 // --- static helpers ---
 
