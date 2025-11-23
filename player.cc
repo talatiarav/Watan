@@ -405,3 +405,23 @@ void Player::setResourcesFromSave(int caffeines,
     // Netflix is never stored as a "card" in the save format.
 }
 
+int Player::getResourceCount(Resources r) const {
+    auto it = resources.find(r);
+    return (it == resources.end() ? 0 : it->second);
+}
+
+void Player::addResource(Resources r, int amount) {
+    if (amount <= 0) return;
+    resources[r] += amount;
+}
+
+void Player::removeResource(Resources r, int amount) {
+    if (amount <= 0) return;
+    auto it = resources.find(r);
+    if (it == resources.end()) return;
+    if (it->second <= amount) {
+        resources.erase(it);
+    } else {
+        it->second -= amount;
+    }
+}
