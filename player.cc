@@ -16,6 +16,27 @@ using std::cout;
 using std::endl;
 using std::string;
 
+namespace {
+
+// Order in save file: Caff, Lab, Lect, Study, Tut
+int getResourceCount(const std::map<Resources,int> &res, Resources r) {
+    auto it = res.find(r);
+    return (it == res.end() ? 0 : it->second);
+}
+
+// Map Assessment → save level (1/2/3)
+int assessmentLevel(Assessment a) {
+    switch (a) {
+        case Assessment::Assignment: return 1;
+        case Assessment::Midterm:    return 2;
+        case Assessment::Exam:       return 3;
+        default:                     return 0; // None = no building
+    }
+}
+
+} // namespace
+
+
 // --- ctor ---
 
 Player::Player(Colour colour)
@@ -120,11 +141,41 @@ std::string Player::encodeVerticesForSave() const {
 
 std::string Player::encodeForSave() const {
     std::ostringstream oss;
-    oss << encodeResourcesForSave()
-        << " g " << encodeGoalsForSave()
-        << " c " << encodeVerticesForSave();
+
+    // 1. Resources in order: Caff, Lab, Lect, Study, Tut
+    int caff   = getResourceCount(resources, Resources::Caffeine);
+    int lab    = getResourceCount(resources, Resources::Lab);
+    int lect   = getResourceCount(resources, Resources::Lecture);
+    int study  = getResourceCount(resources, Resources::Study);
+    int tut    = getResourceCount(resources, Resources::Tutorial);
+
+    oss << caff  << ' '
+        << lab   << ' '
+        << lect  << ' '
+        << study << ' '
+        << tut   << ' ';
+
+    // 2. Edges (roads) after 'g'
+    oss << 'g';
+    for (Edge *e : ownedEdges) {
+        // Edge needs: int getId() const;
+        oss << ' ' << e->getId();
+    }
+
+    // 3. Vertices (criteria) after 'c'
+    oss << " c";
+    for (Vertex *v : ownedVertices) {
+        // Vertex needs: int getId() const; Assessment currentAssessment() const;
+        Assessment a = v->currentAssessment();
+        int level = assessmentLevel(a);
+        if (level == 0) continue; // skip if it's still None / unbuilt
+
+        oss << ' ' << v->getId() << ' ' << level;
+    }
+
     return oss.str();
 }
+
 
 // --- points / rules ---
 
