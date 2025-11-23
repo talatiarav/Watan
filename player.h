@@ -118,7 +118,9 @@ public:
                               int studies,
                               int tutorials);
 
-
+    int getResourceCount(Resources r) const;
+    void addResource(Resources r, int amount);
+    void removeResource(Resources r, int amount);
 
 private:
     // Helper to format the resource counts as a human-readable string.
