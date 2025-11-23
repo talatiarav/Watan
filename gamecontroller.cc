@@ -10,6 +10,28 @@
 
 using std::endl;
 
+namespace {
+
+bool parseColour(const std::string &s, Colour &out) {
+    if (s == "Blue")   { out = Colour::Blue;   return true; }
+    if (s == "Red")    { out = Colour::Red;    return true; }
+    if (s == "Orange") { out = Colour::Orange; return true; }
+    if (s == "Yellow") { out = Colour::Yellow; return true; }
+    return false;
+}
+
+bool parseResource(const std::string &s, Resources &out) {
+    if (s == "Caffeine") { out = Resources::Caffeine; return true; }
+    if (s == "Lab")      { out = Resources::Lab;      return true; }
+    if (s == "Lecture")  { out = Resources::Lecture;  return true; }
+    if (s == "Study")    { out = Resources::Study;    return true; }
+    if (s == "Tutorial") { out = Resources::Tutorial; return true; }
+    return false;
+}
+
+} // namespace
+
+
 GameController::GameController(GameBoard &&b, Colour startingPlayer)
     : board(std::move(b)),
       currentPlayer(startingPlayer),
