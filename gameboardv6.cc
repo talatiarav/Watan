@@ -124,7 +124,7 @@ void GameBoard::initializeBoardGraph(const std::vector<int> &values,
 
 // ---------- Core game actions ----------
 
-void GameBoard::rollDice(Colour activePlayer) {
+int GameBoard::rollDice(Colour activePlayer) {
     Player *p = findPlayer(activePlayer);
     if (!p) {
         throw std::runtime_error("rollDice: unknown player colour.");
@@ -152,9 +152,11 @@ void GameBoard::rollDice(Colour activePlayer) {
             }
         }
 
-        // GameController must now ask the user where to move the geese and
-        // then call moveGeese(...) and handle stealing.
-        return;
+        // GameController will now:
+        //  - ask the user where to move the geese
+        //  - call moveGeese(...)
+        //  - handle stealing
+        return roll;
     }
 
     // Non-7 roll: resource distribution.
@@ -170,7 +172,10 @@ void GameBoard::rollDice(Colour activePlayer) {
     if (!sent) {
         cout << "No students gained resources." << endl;
     }
+
+    return roll;
 }
+
 
 void GameBoard::completeVertex(Colour playerColour, int vertexId) {
     Player *p = findPlayer(playerColour);
