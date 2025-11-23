@@ -15,21 +15,20 @@ class GameBoard;
  *  - manages turn order
  *  - parses text commands from an input stream
  *  - calls into GameBoard to perform game actions
- *  - enforces basic turn rules (roll once per turn, etc.)
+ *  - enforces basic turn rules (roll once per turn, must roll before next)
  *
- * This is the refactor/replacement for the old main.cc + Board-driven loop.
+ * This replaces the old main.cc + Board-driven loop.
  */
 class GameController {
 public:
-    // Takes ownership of an already-constructed board.
+    // Takes ownership of an already-constructed GameBoard.
     explicit GameController(GameBoard &&board);
 
-    // Main game loop: reads commands until a winner or EOF/quit.
+    // Main game loop: reads commands until a winner, quit, or EOF.
     void run(std::istream &in, std::ostream &out);
 
 private:
-    GameBoard &board;        // alias to ownedBoard for convenience
-    GameBoard  ownedBoard;   // actual owned instance
+    GameBoard board;   // owned board
 
     Colour currentPlayer;
     bool rolledThisTurn = false;
@@ -37,14 +36,13 @@ private:
     bool quitRequested = false;
 
     // --- turn / flow helpers ---
-
     void startNewTurn(std::ostream &out);
     void advancePlayer();
     static std::string colourToString(Colour c);
 
     // --- command handling ---
+    void handleCommand(const std::string &line, std::ostream &out);
 
-    void handleCommand(const std::string &line, std::istream &in, std::ostream &out);
     void cmdHelp(std::ostream &out) const;
     void cmdBoard(std::ostream &out) const;
     void cmdStatus(std::ostream &out) const;
@@ -53,12 +51,11 @@ private:
     void cmdRoll(std::ostream &out);
     void cmdGeese(int tileId, std::ostream &out);
 
-    void cmdBuildResidence(int vertexId, std::ostream &out);
+    void cmdComplete(int vertexId, std::ostream &out);
     void cmdImprove(int vertexId, std::ostream &out);
-    void cmdBuildRoad(int edgeId, std::ostream &out);
+    void cmdAchieve(int edgeId, std::ostream &out);
 
     void cmdSave(const std::string &filename, std::ostream &out);
-    void cmdLoad(const std::string &filename, std::ostream &out);
 
     // After any build/improve, check if someone has 10 points.
     void checkForWinner(std::ostream &out);
