@@ -9,6 +9,8 @@
 #include "dice.h"
 #include "vertex.h"
 #include "edge.h"
+#include "assessment.h"
+#include "resources.h"
 
 using std::cout;
 using std::endl;
