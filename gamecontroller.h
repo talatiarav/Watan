@@ -43,7 +43,9 @@ private:
     static std::string colourToString(Colour c);
 
     // --- command handling ---
-    void handleCommand(const std::string &line, std::ostream &out);
+    void handleCommand(const std::string &line,
+                       std::istream &in,
+                       std::ostream &out);
 
     void cmdHelp(std::ostream &out) const;
     void cmdBoard(std::ostream &out) const;
@@ -58,6 +60,12 @@ private:
     void cmdAchieve(int edgeId, std::ostream &out);
 
     void cmdSave(const std::string &filename, std::ostream &out);
+
+   void cmdTrade(const std::string &targetStr,
+                  const std::string &giveStr,
+                  const std::string &takeStr,
+                  std::istream &in,
+                  std::ostream &out);
 
     // After any build/improve, check if someone has 10 points.
     void checkForWinner(std::ostream &out);
