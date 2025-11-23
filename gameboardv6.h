@@ -27,7 +27,7 @@ public:
     static GameBoard createRandom(bool enhance);
 
     // Core game actions
-    void rollDice(Colour activePlayer);
+    int rollDice(Colour activePlayer);
     void completeVertex(Colour playerColour, int vertexId);
     void improveVertex(Colour playerColour, int vertexId);
     void achieveEdge(Colour playerColour, int edgeId);
