@@ -52,7 +52,7 @@ private:
     void cmdStatus(std::ostream &out) const;
     void cmdCriteria(std::ostream &out) const;
 
-    void cmdRoll(std::ostream &out);
+    void cmdRoll(std::istream &in, std::ostream &out);
     void cmdGeese(int tileId, std::ostream &out);
 
     void cmdComplete(int vertexId, std::ostream &out);
@@ -61,11 +61,14 @@ private:
 
     void cmdSave(const std::string &filename, std::ostream &out);
 
-   void cmdTrade(const std::string &targetStr,
+    void cmdTrade(const std::string &targetStr,
                   const std::string &giveStr,
                   const std::string &takeStr,
                   std::istream &in,
                   std::ostream &out);
+
+    void cmdSetFairDice(std::ostream &out);
+    void cmdSetLoadedDice(std::ostream &out);
 
     // After any build/improve, check if someone has 10 points.
     void checkForWinner(std::ostream &out);
