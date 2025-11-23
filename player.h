@@ -107,6 +107,11 @@ public:
     // "<colour> has completed:\n<vertexId> <upgradeNum>\n..."
     void printCriteria(std::ostream &out) const;
 
+    // Serialize this player's state in watan-savefile format:
+    // "<Caff> <Lab> <Lect> <Study> <Tut> g <edges...> c <vertex level>..."
+    std::string encodeForSave() const;
+
+
 private:
     // Helper to format the resource counts as a human-readable string.
     // "<numCaffeines> caffeines, <numLabs> labs, <numLectures> lectures, <numStudies> studies, and <numTutorials> tutorials"
