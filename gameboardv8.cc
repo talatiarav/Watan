@@ -735,6 +735,22 @@ std::vector<Colour> GameBoard::getStealableColoursOnTile(int tileId,
     return result;
 }
 
+std::string GameBoard::encodeBoardLayoutForSave() const {
+    std::string out;
+
+    for (size_t i = 0; i < tiles.size(); ++i) {
+        if (!out.empty()) out += ' ';
+
+        int code = resourceToCode(tiles[i]->getResource());
+        out += std::to_string(code);
+        out += ' ';
+        out += std::to_string(tiles[i]->getValue());
+    }
+
+    return out;
+}
+
+
 // ---------- Private helpers ----------
 
 Player *GameBoard::findPlayer(Colour colour) {
