@@ -6,6 +6,7 @@
 #include <iostream>
 #include <sstream>
 #include <map>
+#include <random>
 
 #include "dice.h"
 #include "vertex.h"
@@ -51,13 +52,13 @@ void Player::setDice(std::unique_ptr<Dice> newDice) {
     dice = std::move(newDice);
 }
 
-int Player::rollDice() {
+/*int Player::rollDice() {
     if (!dice) {
         // default to fair dice using the factory
         dice.reset(Dice::make_dice("fair"));
     }
     return dice->roll();
-}
+}*/
 
 // --- resources / ownership ---
 
@@ -146,11 +147,11 @@ std::string Player::encodeForSave() const {
     std::ostringstream oss;
 
     // 1. Resources in order: Caff, Lab, Lect, Study, Tut
-    int caff   = getResourceCount(resources, Resources::Caffeine);
-    int lab    = getResourceCount(resources, Resources::Lab);
-    int lect   = getResourceCount(resources, Resources::Lecture);
-    int study  = getResourceCount(resources, Resources::Study);
-    int tut    = getResourceCount(resources, Resources::Tutorial);
+    int caff   = ::getResourceCount(resources, Resources::Caffeine);
+    int lab    = ::getResourceCount(resources, Resources::Lab);
+    int lect   = ::getResourceCount(resources, Resources::Lecture);
+    int study  = ::getResourceCount(resources, Resources::Study);
+    int tut    = ::getResourceCount(resources, Resources::Tutorial);
 
     oss << caff  << ' '
         << lab   << ' '
@@ -296,10 +297,12 @@ void Player::loseResourcesToGeese(std::ostream &out) {
     std::srand(static_cast<unsigned int>(std::time(nullptr)));
 
     for (int i = 0; i < numLost; ++i) {
-        std::random_shuffle(keys.begin(), keys.end());
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::shuffle(keys.begin(), keys.end(), gen);
         // find a resource type that is still available
         while (!keys.empty() && resources[keys.front()] == 0) {
-            std::random_shuffle(keys.begin(), keys.end());
+            std::shuffle(keys.begin(), keys.end(), gen);
         }
         Resources r = keys.front();
         resources[r] -= 1;

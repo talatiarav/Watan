@@ -6,6 +6,7 @@
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
+#include <random>
 
 // New enums
 #include "colour.h"
@@ -37,6 +38,18 @@ GameBoard::GameBoard(bool enhance,
     initializeBoardGraph(values, resources, enhance);
 }
 
+int resourceToCode(Resources r) {
+    switch (r) {
+        case Resources::Caffeine: return 0;
+        case Resources::Lab:      return 1;
+        case Resources::Lecture:  return 2;
+        case Resources::Study:    return 3;
+        case Resources::Tutorial: return 4;
+        case Resources::Netflix:  return 5;
+        default:                  return 0; // should not happen
+    }
+}
+
 GameBoard GameBoard::createRandom(bool enhance) {
     // Values: one 2, one 12, two each of 3–6 and 8–11
     std::vector<int> values = {
@@ -66,8 +79,12 @@ GameBoard GameBoard::createRandom(bool enhance) {
     };
 
     std::srand(static_cast<unsigned int>(std::time(nullptr)));
-    std::random_shuffle(values.begin(), values.end());
-    std::random_shuffle(resTypes.begin(), resTypes.end());
+    std::random_device rd;
+    std::mt19937 gen(rd());
+
+    std::shuffle(values.begin(), values.end(), gen);
+    std::shuffle(resTypes.begin(), resTypes.end(), gen);
+
 
     return GameBoard{enhance, values, resTypes};
 }
@@ -91,7 +108,8 @@ void GameBoard::initializeBoardGraph(const std::vector<int> &values,
     tiles.reserve(values.size());
     for (size_t i = 0; i < values.size(); ++i) {
         // you’ll likely want to add a tile ID parameter later
-        tiles.emplace_back(std::make_unique<Tile>(values[i], resources[i]));
+        int id = static_cast<int>(i);
+        tiles.emplace_back(std::make_unique<Tile>(id, resources[i], values[i]));
     }
 
     // 2) Build BoardView

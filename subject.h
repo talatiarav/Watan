@@ -2,7 +2,6 @@
 #define SUBJECT_H
 
 #include <vector>
-#include "state.h"
 
 class Observer;
 
@@ -19,7 +18,6 @@ public:
     virtual ~Subject() = 0;
     void attach(Observer *observer);
     void detach(Observer *observer);
-    virtual State getState() const = 0;
 };
 
 #endif

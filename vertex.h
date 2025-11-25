@@ -34,7 +34,7 @@ class Vertex {
 
     BoardView *observer = nullptr;
 
-    void notifyObserver() const;
+    void notifyObserver();
 
 public:
     explicit Vertex(int id);

@@ -25,7 +25,7 @@ void Edge::attach(BoardView *view) {
     observer = view;
 }
 
-void Edge::notifyObserver() const {
+void Edge::notifyObserver() {
     if (observer) {
         observer->notify(this);
     }

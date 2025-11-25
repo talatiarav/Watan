@@ -32,7 +32,7 @@ class Edge {
 
     BoardView *observer = nullptr;
 
-    void notifyObserver() const;
+    void notifyObserver();
 
 public:
     explicit Edge(int id);

@@ -5,6 +5,8 @@
 class Dice {
 	public:
 		// Factory Method
+		virtual ~Dice() = default;
+
 		static Dice *make_dice(std::string choice);
 		virtual void setDie(int num) = 0;
 		virtual int roll() = 0;

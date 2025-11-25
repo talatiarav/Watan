@@ -5,8 +5,7 @@
 #include <string>
 
 #include "colour.h"
-
-class GameBoard;
+#include "gameboard.h"
 
 /**
  * GameController

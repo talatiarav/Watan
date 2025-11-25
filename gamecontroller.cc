@@ -6,6 +6,7 @@
 
 #include "gameboard.h"
 #include "savemanager.h"
+#include "resources.h"
 
 
 using std::endl;
@@ -124,69 +125,70 @@ void GameController::handleCommand(const std::string &line,
         }
         cmdTrade(targetStr, giveStr, takeStr, in, out);
 
-    // Normalize to lowercase if you want; for now assume lower-case input.
-    if (cmd == "help") {
-        cmdHelp(out);
-    } else if (cmd == "board") {
-        cmdBoard(out);
-    } else if (cmd == "status") {
-        cmdStatus(out);
-    } else if (cmd == "criteria") {
-        cmdCriteria(out);
-    } else if (cmd == "roll") {
-        cmdRoll(in, out);
-    } else if (cmd == "load") {
-        cmdSetLoadedDice(out);
-    } else if (cmd == "fair") {
-        cmdSetFairDice(out);
-    } else if (cmd == "geese") {
-        int tileId;
-        if (!(iss >> tileId)) {
+        // Normalize to lowercase if you want; for now assume lower-case input.
+        if (cmd == "help") {
+            cmdHelp(out);
+        } else if (cmd == "board") {
+            cmdBoard(out);
+        } else if (cmd == "status") {
+            cmdStatus(out);
+        } else if (cmd == "criteria") {
+            cmdCriteria(out);
+        } else if (cmd == "roll") {
+            cmdRoll(in, out);
+        } else if (cmd == "load") {
+            cmdSetLoadedDice(out);
+        } else if (cmd == "fair") {
+            cmdSetFairDice(out);
+        } else if (cmd == "geese") {
+            int tileId;
+            if (!(iss >> tileId)) {
+                out << "Invalid command." << endl;
+            } else {
+                cmdGeese(tileId, out);
+            }
+        } else if (cmd == "complete") {
+            int vertexId;
+            if (!(iss >> vertexId)) {
+                out << "Invalid command." << endl;
+            } else {
+                cmdComplete(vertexId, out);
+            }
+        } else if (cmd == "improve") {
+            int vertexId;
+            if (!(iss >> vertexId)) {
+                out << "Invalid command." << endl;
+            } else {
+                cmdImprove(vertexId, out);
+            }
+        } else if (cmd == "achieve") {
+            int edgeId;
+            if (!(iss >> edgeId)) {
+                out << "Invalid command." << endl;
+            } else {
+                cmdAchieve(edgeId, out);
+            }
+        } else if (cmd == "save") {
+            std::string filename;
+            if (!(iss >> filename)) {
+                out << "Invalid command." << endl;
+            } else {
+                cmdSave(filename, out);
+            }
+        } else if (cmd == "next") {
+            if (!rolledThisTurn) {
+                out << "You must roll before ending your turn." << endl;
+            } else if (awaitingGeesePlacement) {
+                out << "You must move the GEESE before ending your turn." << endl;
+            } else {
+                advancePlayer();
+                startNewTurn(out);
+            }
+        } else if (cmd == "quit") {
+            quitRequested = true;
+        } else {
             out << "Invalid command." << endl;
-        } else {
-            cmdGeese(tileId, out);
         }
-    } else if (cmd == "complete") {
-        int vertexId;
-        if (!(iss >> vertexId)) {
-            out << "Invalid command." << endl;
-        } else {
-            cmdComplete(vertexId, out);
-        }
-    } else if (cmd == "improve") {
-        int vertexId;
-        if (!(iss >> vertexId)) {
-            out << "Invalid command." << endl;
-        } else {
-            cmdImprove(vertexId, out);
-        }
-    } else if (cmd == "achieve") {
-        int edgeId;
-        if (!(iss >> edgeId)) {
-            out << "Invalid command." << endl;
-        } else {
-            cmdAchieve(edgeId, out);
-        }
-    } else if (cmd == "save") {
-        std::string filename;
-        if (!(iss >> filename)) {
-            out << "Invalid command." << endl;
-        } else {
-            cmdSave(filename, out);
-        }
-    } else if (cmd == "next") {
-        if (!rolledThisTurn) {
-            out << "You must roll before ending your turn." << endl;
-        } else if (awaitingGeesePlacement) {
-            out << "You must move the GEESE before ending your turn." << endl;
-        } else {
-            advancePlayer();
-            startNewTurn(out);
-        }
-    } else if (cmd == "quit") {
-        quitRequested = true;
-    } else {
-        out << "Invalid command." << endl;
     }
 }
 
@@ -221,7 +223,7 @@ void GameController::cmdCriteria(std::ostream &out) const {
 
 // --- dice / geese ---
 
-void GameController::cmdRoll(std::ostream &out) {
+void GameController::cmdRoll(std::istream &in, std::ostream &out) {
     if (rolledThisTurn) {
         out << "You have already rolled this turn." << endl;
         return;

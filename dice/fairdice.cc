@@ -12,6 +12,6 @@ int FairDice::roll() {
     // Roll two dice using the distribution and random engine.
     int die1 = dist(engine);
     int die2 = dist(engine);
-    lastRoll = die1 + die2;
+    int lastRoll = die1 + die2;
     return lastRoll;
 }

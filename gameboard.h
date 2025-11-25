@@ -8,13 +8,14 @@
 // Forward declarations of enums
 enum class Colour;
 enum class Resources;
+enum class Assessment;
 
 // Forward declarations of core classes
-class Player;
-class Tile;
-class Vertex;
-class Edge;
-class BoardView;
+#include "player.h"
+#include "tile.h"
+#include "vertex.h"
+#include "edge.h"
+#include "boardview.h"
 
 class GameBoard {
 public:

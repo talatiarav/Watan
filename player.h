@@ -6,15 +6,16 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <iostream>
 
 #include "colour.h"
 #include "resources.h"
 #include "assessment.h"
+#include "dice.h"
 
 // Forward declarations to avoid circular include.
 class Vertex;
 class Edge;
-class Dice;
 
 /**
  * Player
@@ -117,7 +118,6 @@ public:
 
     // Serialize this player's state in watan-savefile format:
     // "<Caff> <Lab> <Lect> <Study> <Tut> g <edges...> c <vertex level>..."
-    std::string encodeForSave() const;
 
         // For SaveManager: overwrite this player's resources with the given counts.
     void setResourcesFromSave(int caffeines,

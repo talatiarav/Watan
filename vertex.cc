@@ -31,7 +31,7 @@ void Vertex::attach(BoardView *view) {
     observer = view;
 }
 
-void Vertex::notifyObserver() const {
+void Vertex::notifyObserver() {
     if (observer) {
         observer->notify(this);
     }
