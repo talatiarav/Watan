@@ -37,6 +37,8 @@ private:
     bool quitRequested = false;
 
     // --- turn / flow helpers ---
+    void setupInitialAssignments(std::istream &in, std::ostream &out);
+
     void startNewTurn(std::ostream &out);
     void advancePlayer();
     static std::string colourToString(Colour c);

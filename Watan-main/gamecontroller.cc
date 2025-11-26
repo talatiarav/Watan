@@ -58,6 +58,51 @@ std::string GameController::colourToString(Colour c) {
 
 // --- turn / flow ---
 
+void GameController::setupInitialAssignments(std::istream &in, std::ostream &out) {
+    // Turn order for initial placements:
+    // Blue, Red, Orange, Yellow, Yellow, Orange, Red, Blue
+    const Colour order[8] = {
+        Colour::Blue,
+        Colour::Red,
+        Colour::Orange,
+        Colour::Yellow,
+        Colour::Yellow,
+        Colour::Orange,
+        Colour::Red,
+        Colour::Blue
+    };
+
+    for (Colour c : order) {
+        while (true) {
+            out << "Student " << colourToString(c)
+                << ", where do you want to complete the assignment?" << std::endl;
+            out << "> ";
+
+            int vertexId;
+            if (!(in >> vertexId)) {
+                // bad input (EOF or non-integer)
+                in.clear();
+                in.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                out << "Invalid input. Please enter an intersection id." << std::endl;
+                continue;
+            }
+
+            try {
+                board.placeInitialAssignment(c, vertexId);
+            } catch (const std::exception &e) {
+                out << e.what() << std::endl;
+                // re-prompt same student
+                continue;
+            }
+
+            // consume rest of line, then show board with new assignment
+            in.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            board.printBoard(out);
+            break;  // move to next student in the order
+        }
+    }
+}
+
 void GameController::startNewTurn(std::ostream &out) {
     rolledThisTurn = false;
     awaitingGeesePlacement = false;
@@ -82,6 +127,7 @@ void GameController::advancePlayer() {
 // --- main loop ---
 
 void GameController::run(std::istream &in, std::ostream &out) {
+    setupInitialAssignments(in, out);
     startNewTurn(out);
 
     std::string line;
@@ -117,6 +163,26 @@ void GameController::handleCommand(const std::string &line,
     iss >> cmd;
 
     if (cmd.empty()) return;
+
+    if (awaitingGeesePlacement) {
+        int tileId;
+        try {
+            tileId = std::stoi(cmd);
+        } catch (...) {
+            out << "Invalid tile. Please enter a tile number." << std::endl;
+            return; // stay in geese mode, ask again next loop
+        }
+
+        try {
+            cmdGeese(tileId, out);   // this should call board.moveGeese(...)
+            awaitingGeesePlacement = false;
+        } catch (const std::exception &e) {
+            out << e.what() << std::endl;
+            // still waiting for a valid tile, so don't clear the flag
+        }
+
+        return; // don't treat this as a normal command
+    }
 
     // Normalize to lowercase if you want; for now assume lower-case input.
     if (cmd == "help") {

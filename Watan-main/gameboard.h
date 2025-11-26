@@ -27,6 +27,8 @@ public:
     // Construct a random board with the standard Watan distribution.
     static GameBoard createRandom(bool enhance);
 
+    void placeInitialAssignment(Colour playerColour, int vertexId);
+
     // Core game actions
     int rollDice(Colour activePlayer);
     void completeVertex(Colour playerColour, int vertexId);

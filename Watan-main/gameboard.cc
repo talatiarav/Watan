@@ -194,6 +194,27 @@ int GameBoard::rollDice(Colour activePlayer) {
     return roll;
 }
 
+void GameBoard::placeInitialAssignment(Colour playerColour, int vertexId) {
+    Player *p = findPlayer(playerColour);
+    if (!p) {
+        throw std::runtime_error("placeInitialAssignment: unknown player colour.");
+    }
+
+    Vertex *v = getVertex(vertexId);
+    if (!v) {
+        throw std::runtime_error("placeInitialAssignment: invalid vertex id.");
+    }
+
+    // Still enforce adjacency/ownership rules, but ignore resources.
+    if (!v->canBeCompletedBy(playerColour)) {
+        throw std::runtime_error("You cannot build here.");
+    }
+
+    // Same effect as completeVertex, but free.
+    v->complete(p);
+    p->addVertex(v);
+}
+
 
 void GameBoard::completeVertex(Colour playerColour, int vertexId) {
     Player *p = findPlayer(playerColour);
