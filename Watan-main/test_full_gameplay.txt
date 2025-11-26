@@ -1,0 +1,17 @@
+status
+roll
+status
+complete 0
+improve 0
+achieve 0
+next
+status
+roll
+next
+roll
+next
+roll
+next
+roll
+quit
+
