@@ -317,6 +317,7 @@ void BoardView::render(std::ostream &out) const {
                     out << "|" << criteriaString[c] << "|";
                     ++c;
                     out << "--" << goalsString[g] << "--";
+                    ++g;
                     ++numGoal;
                     out << "|" << criteriaString[c] << "|";
                     ++c;
@@ -334,6 +335,7 @@ void BoardView::render(std::ostream &out) const {
                     out << "|" << criteriaString[c] << "|";
                     ++c;
                     out << "--" << goalsString[g] << "--";
+                    ++g;
                     ++numGoal;
                     out << "|" << criteriaString[c] << "|";
                     ++c;
