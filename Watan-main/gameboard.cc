@@ -850,6 +850,12 @@ std::vector<Colour> GameBoard::getStealableColoursOnTile(int tileId,
     std::istringstream iss(names);
     std::string token;
     while (std::getline(iss, token, ',')) {
+        // Trim leading whitespace
+        size_t start = token.find_first_not_of(" \t");
+        if (start != std::string::npos) {
+            token = token.substr(start);
+        }
+        
         if (token == "Blue") {
             result.push_back(Colour::Blue);
         } else if (token == "Red") {
@@ -929,15 +935,15 @@ const Edge *GameBoard::getEdge(int edgeId) const {
 }
 
 
-void GameBoard::setRoadForLoad(Colour playerColour, int edgeId) {
+void GameBoard::setEdgeForLoad(Colour playerColour, int edgeId) {
     Player *p = findPlayer(playerColour);
     if (!p) {
-        throw std::runtime_error("setRoadForLoad: unknown player colour.");
+        throw std::runtime_error("setEdgeForLoad: unknown player colour.");
     }
 
     Edge *e = getEdge(edgeId);
     if (!e) {
-        throw std::runtime_error("setRoadForLoad: invalid edge id.");
+        throw std::runtime_error("setEdgeForLoad: invalid edge id.");
     }
 
     // We assume Edge::achieve just sets ownership + notifies view
@@ -946,17 +952,17 @@ void GameBoard::setRoadForLoad(Colour playerColour, int edgeId) {
     p->addEdge(e);
 }
 
-void GameBoard::setResidenceForLoad(Colour playerColour,
+void GameBoard::setVertexForLoad(Colour playerColour,
                                     int vertexId,
                                     Assessment level) {
     Player *p = findPlayer(playerColour);
     if (!p) {
-        throw std::runtime_error("setResidenceForLoad: unknown player colour.");
+        throw std::runtime_error("setVertexForLoad: unknown player colour.");
     }
 
     Vertex *v = getVertex(vertexId);
     if (!v) {
-        throw std::runtime_error("setResidenceForLoad: invalid vertex id.");
+        throw std::runtime_error("setVertexForLoad: invalid vertex id.");
     }
 
     // Build up to the desired level without spending resources.

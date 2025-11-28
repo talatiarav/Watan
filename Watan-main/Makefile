@@ -2,7 +2,7 @@ CXX      = g++
 CXXFLAGS = -std=c++14 -Wall -g -MMD -Werror=vla
 
 EXEC    = watan
-SOURCES = $(wildcard *.cc)
+SOURCES = $(filter-out gamecontroller.cc tile.cc, $(wildcard *.cc))
 OBJECTS = $(SOURCES:.cc=.o)
 DEPENDS = $(OBJECTS:.o=.d)
 

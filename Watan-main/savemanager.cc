@@ -235,7 +235,7 @@ GameBoard SaveManager::loadGame(bool enhance,
 
         // 2. Roads (edges)
         for (int edgeId : data.edgeIds) {
-            board.setRoadForLoad(colour, edgeId);
+            board.setEdgeForLoad(colour, edgeId);
         }
 
         // 3. Residences (vertices)
@@ -243,7 +243,7 @@ GameBoard SaveManager::loadGame(bool enhance,
             int vertexId = pair.first;
             int level    = pair.second;
             Assessment a = levelToAssessment(level);
-            board.setResidenceForLoad(colour, vertexId, a);
+            board.setVertexForLoad(colour, vertexId, a);
         }
     }
 

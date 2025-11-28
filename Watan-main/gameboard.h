@@ -61,8 +61,8 @@ public:
     std::string encodeBoardLayoutForSave() const;
 
     // Load-only helpers: set edges/vertices from save without resource checks.
-    void setRoadForLoad(Colour owner, int edgeId);
-    void setResidenceForLoad(Colour owner, int vertexId, Assessment level);
+    void setEdgeForLoad(Colour owner, int edgeId);
+    void setVertexForLoad(Colour owner, int vertexId, Assessment level);
     
     // For SaveManager: read-only access to players (fixed order: Blue, Red, Orange, Yellow).
     const std::vector<std::unique_ptr<Player>> &getPlayers() const { return players; }
