@@ -5,10 +5,10 @@
 using namespace std;
 
 Dice *Dice::make_dice(string choice) {
-	if (choice == "fair") {
-		return new Fair;
-	}
-	else {
+
+	if (choice == "loaded") {
 		return new Loaded;
+	} else {
+		return new Fair;
 	}
 }
