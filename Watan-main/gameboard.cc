@@ -760,6 +760,12 @@ std::vector<Colour> GameBoard::getStealableColoursOnTile(int tileId,
     std::istringstream iss(names);
     std::string token;
     while (std::getline(iss, token, ',')) {
+        // Trim leading whitespace
+        size_t start = token.find_first_not_of(" \t");
+        if (start != std::string::npos) {
+            token = token.substr(start);
+        }
+        
         if (token == "Blue") {
             result.push_back(Colour::Blue);
         } else if (token == "Red") {

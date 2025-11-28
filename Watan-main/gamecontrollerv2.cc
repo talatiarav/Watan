@@ -347,8 +347,7 @@ void GameController::cmdRoll(std::istream &in, std::ostream &out) {
 
     if (roll == 7) {
         awaitingGeesePlacement = true;
-        out << "Student " << colourToString(currentPlayer)
-            << ", choose where to place the GEESE." << endl;
+        out << "Choose where to place the GEESE." << endl;
         // GameController will then expect a 'geese <tileId>' command.
     }
 }
@@ -359,124 +358,126 @@ void GameController::cmdGeese(int tileId, std::istream &in, std::ostream &out) {
         return;
     }
 
-    try {
-        // Move the geese; GameBoard will validate tileId.
-        board.moveGeese(currentPlayer, tileId);
+    // Move the geese; GameBoard will validate tileId.
+    // If this throws, let the exception propagate so handleCommand knows it failed
+    board.moveGeese(currentPlayer, tileId);
 
-        // Determine who can be stolen from on this tile.
-        auto stealable = board.getStealableColoursOnTile(tileId, currentPlayer);
+    // Determine who can be stolen from on this tile.
+    auto stealable = board.getStealableColoursOnTile(tileId, currentPlayer);
 
-        if (stealable.empty()) {
-            // Edge case: no one else here has resources.
-            out << "Student " << colourToString(currentPlayer)
-                << " has no students to steal from." << std::endl;
-            return;
-        }
-
-        // Print list of possible victims.
+    if (stealable.empty()) {
+        // Edge case: no one else here has resources.
         out << "Student " << colourToString(currentPlayer)
-            << " can choose to steal from ";
-        for (size_t i = 0; i < stealable.size(); ++i) {
-            if (i > 0) out << ", ";
-            out << colourToString(stealable[i]);
-        }
-        out << "." << std::endl;
-
-        // Ask which student to steal from.
-        out << "Choose a student to steal from." << std::endl;
-        out << "> ";
-
-        Colour targetColour;
-        std::string targetStr;
-
-        while (true) {
-            if (!(in >> targetStr)) {
-                // Input error / EOF: just bail out gracefully.
-                in.clear();
-                return;
-            }
-
-            if (!parseColour(targetStr, targetColour)) {
-                out << "Invalid player. Valid players: Blue, Red, Orange, Yellow" << std::endl;
-            } else {
-                bool isAllowed = false;
-                for (Colour c : stealable) {
-                    if (c == targetColour) {
-                        isAllowed = true;
-                        break;
-                    }
-                }
-                if (!isAllowed) {
-                    out << "You must choose a student from the list." << std::endl;
-                } else {
-                    break;  // valid choice
-                }
-            }
-
-            out << "> ";
-        }
-
-        // Now actually steal one random resource from targetColour.
-        Player *thief = board.getPlayer(currentPlayer);
-        Player *victim = board.getPlayer(targetColour);
-
-        if (!thief || !victim) {
-            throw std::runtime_error("Internal error: player not found for geese stealing.");
-        }
-
-        int totalRes = victim->numResources();
-        if (totalRes <= 0) {
-            // Should not happen because we filtered on resources, but be safe.
-            out << "Student " << colourToString(currentPlayer)
-                << " has no students to steal from." << std::endl;
-            return;
-        }
-
-        // Build a pool of resource cards proportional to counts.
-        std::vector<Resources> pool;
-        pool.reserve(totalRes);
-
-        const Resources types[5] = {
-            Resources::Caffeine,
-            Resources::Lab,
-            Resources::Lecture,
-            Resources::Study,
-            Resources::Tutorial
-        };
-
-        for (Resources r : types) {
-            int count = victim->getResourceCount(r);
-            for (int i = 0; i < count; ++i) {
-                pool.push_back(r);
-            }
-        }
-
-        if (pool.empty()) {
-            out << "Student " << colourToString(currentPlayer)
-                << " has no students to steal from." << std::endl;
-            return;
-        }
-
-        std::random_device rd;
-        std::mt19937 gen(rd());
-        std::uniform_int_distribution<> dist(0, static_cast<int>(pool.size() - 1));
-
-        Resources stolen = pool[dist(gen)];
-
-        // Transfer 1 resource card.
-        victim->removeResource(stolen, 1);
-        thief->addResource(stolen, 1);
-
-        out << "Student " << colourToString(currentPlayer)
-            << " steals " << resourceToSpecName(stolen)
-            << " from student " << colourToString(targetColour) << "." << std::endl;
-
-        // Clear to end of line so the next getline in run() is clean.
-        in.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-
-    } catch (const std::exception &e) {
-        out << e.what() << std::endl;
+            << " has no students to steal from." << std::endl;
+        awaitingGeesePlacement = false;
+        return;
     }
+
+    // Print list of possible victims.
+    out << "Student " << colourToString(currentPlayer)
+        << " can choose to steal from ";
+    for (size_t i = 0; i < stealable.size(); ++i) {
+        if (i > 0) out << ", ";
+        out << colourToString(stealable[i]);
+    }
+    out << "." << std::endl;
+
+    // Ask which student to steal from.
+    out << "Choose a student to steal from." << std::endl;
+    out << "> ";
+
+    Colour targetColour;
+    std::string targetStr;
+
+    while (true) {
+        if (!(in >> targetStr)) {
+            // Input error / EOF: just bail out gracefully.
+            in.clear();
+            return;
+        }
+
+        if (!parseColour(targetStr, targetColour)) {
+            out << "Invalid player. Valid players: Blue, Red, Orange, Yellow" << std::endl;
+        } else {
+            bool isAllowed = false;
+            for (Colour c : stealable) {
+                if (c == targetColour) {
+                    isAllowed = true;
+                    break;
+                }
+            }
+            if (!isAllowed) {
+                out << "You must choose a student from the list." << std::endl;
+            } else {
+                break;  // valid choice
+            }
+        }
+
+        out << "> ";
+    }
+
+    // Now actually steal one random resource from targetColour.
+    Player *thief = board.getPlayer(currentPlayer);
+    Player *victim = board.getPlayer(targetColour);
+
+    if (!thief || !victim) {
+        throw std::runtime_error("Internal error: player not found for geese stealing.");
+    }
+
+    int totalRes = victim->numResources();
+    if (totalRes <= 0) {
+        // Should not happen because we filtered on resources, but be safe.
+        out << "Student " << colourToString(currentPlayer)
+            << " has no students to steal from." << std::endl;
+        awaitingGeesePlacement = false;
+        return;
+    }
+
+    // Build a pool of resource cards proportional to counts.
+    std::vector<Resources> pool;
+    pool.reserve(totalRes);
+
+    const Resources types[5] = {
+        Resources::Caffeine,
+        Resources::Lab,
+        Resources::Lecture,
+        Resources::Study,
+        Resources::Tutorial
+    };
+
+    for (Resources r : types) {
+        int count = victim->getResourceCount(r);
+        for (int i = 0; i < count; ++i) {
+            pool.push_back(r);
+        }
+    }
+
+    if (pool.empty()) {
+        out << "Student " << colourToString(currentPlayer)
+            << " has no students to steal from." << std::endl;
+        awaitingGeesePlacement = false;
+        return;
+    }
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dist(0, static_cast<int>(pool.size() - 1));
+
+    Resources stolen = pool[dist(gen)];
+
+    // Transfer 1 resource card.
+    victim->removeResource(stolen, 1);
+    thief->addResource(stolen, 1);
+
+    out << "Student " << colourToString(currentPlayer)
+        << " steals " << resourceToSpecName(stolen)
+        << " from student " << colourToString(targetColour) << "." << std::endl;
+
+    // Clear to end of line so the next getline in run() is clean.
+    in.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    
+    // Clear the awaiting flag so the player can continue their turn
+    awaitingGeesePlacement = false;
 }
 
 

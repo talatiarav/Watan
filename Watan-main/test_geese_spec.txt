@@ -1,0 +1,34 @@
+board
+2 5 4 6 3 9 10 3 8 11 11 4 8 5 10 9 6 12 2
+CAFFEINE LAB LECTURE TUTORIAL STUDY PARK CAFFEINE LAB LECTURE TUTORIAL STUDY CAFFEINE LAB LECTURE TUTORIAL CAFFEINE LAB LECTURE STUDY
+Blue
+3
+Blue
+9
+Red
+8
+Red
+14
+Orange
+20
+Orange
+26
+Yellow
+27
+Yellow
+33
+roll
+roll
+roll
+roll
+roll
+load
+Blue
+roll
+7
+geese 9
+Yellow
+board
+next
+quit
+

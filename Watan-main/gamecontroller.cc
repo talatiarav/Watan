@@ -174,7 +174,7 @@ void GameController::handleCommand(const std::string &line,
         }
 
         try {
-            cmdGeese(tileId, out);   // this should call board.moveGeese(...)
+            cmdGeese(tileId, in, out);   // this should call board.moveGeese(...)
             awaitingGeesePlacement = false;
         } catch (const std::exception &e) {
             out << e.what() << std::endl;
@@ -211,7 +211,7 @@ void GameController::handleCommand(const std::string &line,
         if (!(iss >> tileId)) {
             out << "Invalid command." << endl;
         } else {
-            cmdGeese(tileId, out);
+            cmdGeese(tileId, in, out);
         }
     } else if (cmd == "complete") {
         int vertexId;
@@ -341,7 +341,7 @@ void GameController::cmdRoll(std::istream &in, std::ostream &out) {
     }
 }
 
-void GameController::cmdGeese(int tileId, std::ostream &out) {
+void GameController::cmdGeese(int tileId, std::istream &in, std::ostream &out) {
     if (!awaitingGeesePlacement) {
         out << "You may only move the GEESE immediately after rolling a 7." << endl;
         return;

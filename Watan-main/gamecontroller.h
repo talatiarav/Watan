@@ -54,7 +54,7 @@ private:
     void cmdCriteria(std::ostream &out) const;
 
     void cmdRoll(std::istream &in, std::ostream &out);
-    void cmdGeese(int tileId, std::ostream &out);
+    void cmdGeese(int tileId, std::istream &in, std::ostream &out);
 
     void cmdComplete(int vertexId, std::ostream &out);
     void cmdImprove(int vertexId, std::ostream &out);
