@@ -2,14 +2,11 @@
 
 #include <iostream>
 #include <sstream>
-#include <array>
 
 #include "vertex.h"
 #include "edge.h"
 
 using std::string;
-
-// ---------- Small helpers ----------
 
 std::string BoardView::centre(const std::string &s, int width) {
     if ((int)s.size() >= width) return s;
@@ -19,59 +16,12 @@ std::string BoardView::centre(const std::string &s, int width) {
     return std::string(left, ' ') + s + std::string(right, ' ');
 }
 
-// Precomputed leading indentation for each printed line (1-based).
-// This replaces the huge if/else chain and keeps spacing data in one place.
-const std::string &BoardView::indentForLine(int lineNum) {
-    static const std::string INDENT35 = "                                   ";
-    static const std::string INDENT33 = "                                 ";
-    static const std::string INDENT20 = "                    ";
-    static const std::string INDENT18 = "                  ";
-    static const std::string INDENT5  = "     ";
-    static const std::string INDENT3  = "   ";
-    static const std::string EMPTY    = "";
-
-    if (lineNum == 1 || lineNum == 2 ||
-        lineNum == 40 || lineNum == 41) {
-        return INDENT35;
-
-    } else if (lineNum == 3 || lineNum == 4 ||
-               lineNum == 38 || lineNum == 39) {
-        return INDENT33;
-
-    } else if (lineNum == 5 || lineNum == 6 ||
-               lineNum == 36 || lineNum == 37) {
-        return INDENT20;
-
-    } else if (lineNum == 7 || lineNum == 8 ||
-               lineNum == 34 || lineNum == 35) {
-        return INDENT18;
-
-    } else if (lineNum == 9  || lineNum == 10 ||
-               lineNum == 16 || lineNum == 17 || lineNum == 18 ||
-               lineNum == 24 || lineNum == 25 || lineNum == 26 ||
-               lineNum == 32 || lineNum == 33) {
-        return INDENT5;
-
-    } else if (lineNum == 11 || lineNum == 12 || lineNum == 14 ||
-               lineNum == 15 || lineNum == 19 || lineNum == 20 ||
-               lineNum == 22 || lineNum == 23 || lineNum == 27 ||
-               lineNum == 28 || lineNum == 30 || lineNum == 31) {
-        return INDENT3;
-    }
-
-    // any other line: no leading spaces
-    return EMPTY;
-}
-
-
-// ---------- Construction ----------
-
 BoardView::BoardView(bool enhance,
                      const std::vector<int>       &values,
                      const std::vector<Resources> &resources)
     : enhance{enhance}
 {
-    // --- init criteria/goals as numbers (54 vertices, 72 edges) ---
+    // --- init criteria/goals as numbers ---
     criteriaString.resize(54);
     for (int i = 0; i < 54; ++i) {
         if (i < 10) criteriaString[i] = " " + std::to_string(i);
@@ -100,12 +50,10 @@ BoardView::BoardView(bool enhance,
             case Resources::Netflix:  name = "NETFLIX";  break;
             case Resources::None:     name = "";         break;
         }
-        resourcesString[i] = name.empty()
-            ? std::string(16, ' ')
-            : centre(name, 16);
+        resourcesString[i] = name.empty() ? std::string(16, ' ')
+                                          : centre(name, 16);
 
-        // Value: ***blank for Netflix or non-positive values***,
-        // otherwise centred number.
+        // Value: blank for Netflix, otherwise centred number
         if (resources[i] == Resources::Netflix || values[i] <= 0) {
             valuesString[i] = std::string(16, ' ');
         } else {
@@ -114,19 +62,17 @@ BoardView::BoardView(bool enhance,
     }
 }
 
-// ---------- Notifications ----------
-
 void BoardView::notify(Vertex *vertex) {
     if (!vertex) return;
 
-    Colour     c   = vertex->getOwnerColour();
-    Assessment a   = vertex->currentAssessment();
+    Colour     c = vertex->getOwnerColour();
+    Assessment a = vertex->currentAssessment();
     int        idx = vertex->getId();
 
     if (idx < 0 || idx >= static_cast<int>(criteriaString.size())) return;
 
     if (a == Assessment::None) {
-        // If un-built, leave the numeric label
+        // If "un-built", leave the numeric label
         return;
     }
 
@@ -144,7 +90,7 @@ void BoardView::notify(Vertex *vertex) {
             toReplace += "\u001b[38;5;11;1mY";
         }
     } else {
-        if (c == Colour::Blue)         toReplace += "B";
+        if (c == Colour::Blue)    toReplace += "B";
         else if (c == Colour::Red)    toReplace += "R";
         else if (c == Colour::Orange) toReplace += "O";
         else if (c == Colour::Yellow) toReplace += "Y";
@@ -170,6 +116,7 @@ void BoardView::notify(Edge *edge) {
 
     if (idx < 0 || idx >= static_cast<int>(goalsString.size())) return;
 
+    // For goals, spec only has Achievement, so we always draw '*A*-like'
     string toReplace;
 
     if (enhance) {
@@ -184,7 +131,7 @@ void BoardView::notify(Edge *edge) {
         }
         toReplace += "A\u001B[0m";
     } else {
-        if (c == Colour::Blue)         toReplace += "B";
+        if (c == Colour::Blue)    toReplace += "B";
         else if (c == Colour::Red)    toReplace += "R";
         else if (c == Colour::Orange) toReplace += "O";
         else if (c == Colour::Yellow) toReplace += "Y";
@@ -197,12 +144,6 @@ void BoardView::notify(Edge *edge) {
 void BoardView::notifyGeese(int tileId) {
     geeseAt = tileId;
 }
-
-// ---------- Rendering ----------
-//
-// This is still specific to the standard 19-tile Watan layout, but the
-// indentation and per-tile strings are data-driven, and the geese
-// markers overlay that layout.
 
 void BoardView::render(std::ostream &out) const {
     int oddToIncrement = 2;
@@ -224,8 +165,29 @@ void BoardView::render(std::ostream &out) const {
     int r = 0; // resource index
 
     while (c < criteriaLength && g < goalLength) {
-        // Leading spacing by line (centralized in indentForLine)
-        out << indentForLine(lineNum);
+        // Leading spacing by line
+        if (lineNum == 1 || lineNum == 2 || lineNum == 40 || lineNum == 41) {
+            out << "                                   ";
+        } else if (lineNum == 3 || lineNum == 4 ||
+                   lineNum == 38 || lineNum == 39) {
+            out << "                                 ";
+        } else if (lineNum == 5 || lineNum == 6 ||
+                   lineNum == 36 || lineNum == 37) {
+            out << "                    ";
+        } else if (lineNum == 7 || lineNum == 8 ||
+                   lineNum == 34 || lineNum == 35) {
+            out << "                  ";
+        } else if (lineNum == 9 || lineNum == 10 || lineNum == 16 ||
+                   lineNum == 17 || lineNum == 18 || lineNum == 24 ||
+                   lineNum == 25 || lineNum == 26 || lineNum == 32 ||
+                   lineNum == 33) {
+            out << "     ";
+        } else if (lineNum == 11 || lineNum == 12 || lineNum == 14 ||
+                   lineNum == 15 || lineNum == 19 || lineNum == 20 ||
+                   lineNum == 22 || lineNum == 23 || lineNum == 27 ||
+                   lineNum == 28 || lineNum == 30 || lineNum == 31) {
+            out << "   ";
+        }
 
         // Resource / geese lines (hex insides)
         if (lineNum == 2) {

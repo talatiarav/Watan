@@ -22,10 +22,6 @@ class Edge;
  *  - tracks tile resources, values, and indices
  *  - tracks geese position
  *  - supports enhanced (coloured) and plain modes
- *
- * NOTE: the geometric layout is still the standard 19-tile Watan board,
- * but most "magic" strings are now centralized (indentation, labels,
- * blank Netflix value, etc.) so small layout tweaks are easier.
  */
 class BoardView {
     int  geeseAt  = -1;
@@ -50,9 +46,6 @@ class BoardView {
 
     // Helpers
     static std::string centre(const std::string &s, int width);
-
-    // Leading indentation per output line (1-based index).
-    static const std::string &indentForLine(int lineNum);
 
 public:
     // values/resources are size 19, matching the 19 tiles

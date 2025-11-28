@@ -111,7 +111,7 @@ void GameController::startNewTurn(std::ostream &out) {
 
     // Spec says: "followed by the status of the student".
     // Our GameBoard::printStatus prints all students, which is fine / even nicer.
-    board.printStatus(out);
+    board.printStatusFor(currentPlayer, out);
 }
 
 void GameController::advancePlayer() {

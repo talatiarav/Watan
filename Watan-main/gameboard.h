@@ -41,6 +41,8 @@ public:
     void printStatus(std::ostream &out) const;
     void printCriteria(Colour playerColour, std::ostream &out) const;
 
+    void printStatusFor(Colour playerColour, std::ostream &out) const;
+
     bool hasWinner() const;
     Colour getWinner() const;
 

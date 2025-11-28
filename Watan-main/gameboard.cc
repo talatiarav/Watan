@@ -50,16 +50,26 @@ int resourceToCode(Resources r) {
     }
 }
 
+std::string resourceToName(Resources r) {
+    switch (r) {
+        case Resources::Caffeine: return "Caffeine";
+        case Resources::Lab:      return "Lab";
+        case Resources::Lecture:  return "Lecture";
+        case Resources::Study:    return "Study";
+        case Resources::Tutorial: return "Tutorial";
+        default:                  return "";
+    }
+}
+
 GameBoard GameBoard::createRandom(bool enhance) {
-    // Values: one 2, one 12, two each of 3–6 and 8–11, plus 7 for Netflix tile
-    // Total: 19 tiles 
-    std::vector<int> values = {
+    // 18 number tokens (no 7):
+    // one 2, one 12, and two each of 3–6 and 8–11.
+    std::vector<int> chits = {
         2,
         3, 3,
         4, 4,
         5, 5,
         6, 6,
-        7,        // Netflix/desert tile (doesn't produce)
         8, 8,
         9, 9,
         10, 10,
@@ -67,25 +77,53 @@ GameBoard GameBoard::createRandom(bool enhance) {
         12
     };
 
-    // Resources: 3 TUTORIAL, 3 STUDY, 4 CAFFEINE, 4 LAB, 4 LECTURE, 1 NETFLIX
-    // Total: 19 tiles
+    // 19 resource tiles, including one Netflix (desert).
     std::vector<Resources> resTypes = {
         Resources::Tutorial, Resources::Tutorial, Resources::Tutorial,
         Resources::Study,    Resources::Study,    Resources::Study,
-        Resources::Caffeine, Resources::Caffeine, Resources::Caffeine, Resources::Caffeine,
-        Resources::Lab,      Resources::Lab,      Resources::Lab,      Resources::Lab,
-        Resources::Lecture,  Resources::Lecture,  Resources::Lecture,  Resources::Lecture,
+        Resources::Caffeine, Resources::Caffeine,
+        Resources::Caffeine, Resources::Caffeine,
+        Resources::Lab,      Resources::Lab,
+        Resources::Lab,      Resources::Lab,
+        Resources::Lecture,  Resources::Lecture,
+        Resources::Lecture,  Resources::Lecture,
         Resources::Netflix
     };
 
-    std::srand(static_cast<unsigned int>(std::time(nullptr)));
+    // RNG
     std::random_device rd;
     std::mt19937 gen(rd());
 
-    std::shuffle(values.begin(), values.end(), gen);
+    // Shuffle resources first
     std::shuffle(resTypes.begin(), resTypes.end(), gen);
 
+    // Find the Netflix (desert) tile index
+    int netflixIndex = -1;
+    for (int i = 0; i < static_cast<int>(resTypes.size()); ++i) {
+        if (resTypes[i] == Resources::Netflix) {
+            netflixIndex = i;
+            break;
+        }
+    }
+    if (netflixIndex == -1) {
+        throw std::runtime_error("createRandom: no Netflix tile in resources list.");
+    }
 
+    // Shuffle the 18 chits
+    std::shuffle(chits.begin(), chits.end(), gen);
+
+    // Build 19 values: 0 for Netflix, other tiles get chits
+    std::vector<int> values(resTypes.size(), 0);
+    int chitPos = 0;
+    for (int i = 0; i < static_cast<int>(values.size()); ++i) {
+        if (i == netflixIndex) {
+            values[i] = 0;            // desert / Netflix has no number
+        } else {
+            values[i] = chits[chitPos++];
+        }
+    }
+
+    // Now we have 19 tiles, 18 real numbers (no 7), and one 0 for Netflix.
     return GameBoard{enhance, values, resTypes};
 }
 
@@ -150,8 +188,8 @@ int GameBoard::rollDice(Colour activePlayer) {
 
     int roll = p->rollDice();
 
+    // --- Handle roll = 7 (geese) as before ---
     if (roll == 7) {
-        // Geese logic: any player with >= 10 resources loses half.
         bool anyLost = false;
         for (const auto &pl : players) {
             if (pl->numResources() >= 10) {
@@ -161,7 +199,7 @@ int GameBoard::rollDice(Colour activePlayer) {
         }
 
         if (!anyLost) {
-            cout << "No students lost resources to the GEESE." << endl;
+            std::cout << "No students lost resources to the GEESE." << std::endl;
         } else {
             for (auto &pl : players) {
                 if (pl->numResources() >= 10) {
@@ -170,29 +208,73 @@ int GameBoard::rollDice(Colour activePlayer) {
             }
         }
 
-        // GameController will now:
-        //  - ask the user where to move the geese
-        //  - call moveGeese(...)
-        //  - handle stealing
+        // GameController will now move geese + stealing, etc.
         return roll;
     }
 
-    // Non-7 roll: resource distribution.
-    bool sent = false;
+    // --- Snapshot resources BEFORE distribution ---
+    // Only the 5 real resources; ignore Netflix/None.
+    const Resources tracked[5] = {
+        Resources::Caffeine,
+        Resources::Lab,
+        Resources::Lecture,
+        Resources::Study,
+        Resources::Tutorial
+    };
+
+    // before[colour][resource] = count
+    std::map<Colour, std::map<Resources,int>> before;
+    for (const auto &pl : players) {
+        Colour c = pl->getColour();
+        for (Resources r : tracked) {
+            before[c][r] = pl->getResourceCount(r);
+        }
+    }
+
+    // --- Distribute resources (no printing here) ---
     for (auto &t : tiles) {
         if (t->getValue() == roll) {
-            if (t->sendResources()) {
-                sent = true;
+            t->sendResources();   // updates players
+        }
+    }
+
+    // --- Compute deltas and print per student in colour order ---
+    bool anyGained = false;
+    const Colour order[4] = {
+        Colour::Blue, Colour::Red, Colour::Orange, Colour::Yellow
+    };
+
+    for (Colour c : order) {
+        Player *pl = findPlayer(c);
+        if (!pl) continue;
+
+        std::vector<std::pair<Resources,int>> gains;
+
+        for (Resources r : tracked) {
+            int beforeCount = before[c][r];
+            int afterCount  = pl->getResourceCount(r);
+            int diff        = afterCount - beforeCount;
+            if (diff > 0) {
+                gains.emplace_back(r, diff);
+            }
+        }
+
+        if (!gains.empty()) {
+            anyGained = true;
+            std::cout << "Student " << c << " gained:" << std::endl;
+            for (auto &g : gains) {
+                std::cout << g.second << " " << resourceToName(g.first) << std::endl;
             }
         }
     }
 
-    if (!sent) {
-        cout << "No students gained resources." << endl;
+    if (!anyGained) {
+        std::cout << "No students gained resources." << std::endl;
     }
 
     return roll;
 }
+
 
 void GameBoard::placeInitialAssignment(Colour playerColour, int vertexId) {
     Player *p = findPlayer(playerColour);
@@ -728,6 +810,14 @@ void GameBoard::printCriteria(Colour playerColour, std::ostream &out) const {
         throw std::runtime_error("printCriteria: unknown player colour.");
     }
     p->printCriteria(out);
+}
+
+void GameBoard::printStatusFor(Colour playerColour, std::ostream &out) const {
+    const Player *p = findPlayer(playerColour);
+    if (!p) {
+        throw std::runtime_error("printStatusFor: unknown player colour.");
+    }
+    p->printStatus(out);
 }
 
 bool GameBoard::hasWinner() const {
