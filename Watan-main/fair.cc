@@ -3,12 +3,13 @@ module Fair;
 import <stdlib.h>;
 import <iostream>;
 
+// Implements fair dice that generate random rolls from 2–12.
+// setDie() is unused here, since fair dice cannot be forced,
+// and roll() returns the sum of two random 1–6 values.
+
 using namespace std;
 
-// 2.8
-// ctor for a randomly generated fair dice
 Fair::Fair() {
-  // std::srand(std::time(NULL));
   dice1 = 0;
   dice2 = 0;
 }
