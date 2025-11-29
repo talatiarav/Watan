@@ -11,12 +11,10 @@ class Vertex;
 class Player;
 enum class Colour : int;
 
-/**
- * Tile
- * 
- * Represents a resource-producing hexagonal tile on the game board.
- * Inherits from Subject to support the Observer pattern.
- */
+// Represents a single board tile with a resource type and value.
+// Tracks which criteria surround it and whether the GEESE are on it.
+// Used to determine resource production when dice are rolled.
+
 export class Tile : public Subject {
     int id;
     int value;
