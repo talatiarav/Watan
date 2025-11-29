@@ -1,6 +1,7 @@
-#include "colour.h"
-#include <iostream>
-#include <cstdlib>
+module Colour;
+
+import <iostream>;
+import <cstdlib>;
 
 // Global flag for colored output (only affects board display in boardview.cc)
 static bool useColors = false;
@@ -21,4 +22,3 @@ std::ostream &operator<<(std::ostream &out, Colour colour) {
     }
     return out;
 }
-
