@@ -11,3 +11,4 @@ export enum class Assessment {
     Exam,
     None
 };
+
