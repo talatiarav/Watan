@@ -27,7 +27,7 @@ public:
 
     // Main game loop: reads commands until a winner, quit, or EOF.
     // Returns true if the player wants to play again, false otherwise.
-    bool run(std::istream &in, std::ostream &out);
+    bool run(std::istream &in, std::ostream &out, bool loadedFile);
 
 private:
     GameBoard board;   // owned board
