@@ -1,11 +1,10 @@
-#ifndef GAMECONTROLLER_H
-#define GAMECONTROLLER_H
+export module GameController;
 
-#include <iosfwd>
-#include <string>
+import <iosfwd>;
+import <string>;
 
-#include "colour.h"
-#include "gameboard.h"
+import Colour;
+import GameBoard;
 
 /**
  * GameController
@@ -18,7 +17,7 @@
  *
  * This replaces the old main.cc + Board-driven loop.
  */
-class GameController {
+export class GameController {
 public:
     // Takes ownership of an already-constructed GameBoard.
     explicit GameController(GameBoard &&board);
@@ -74,6 +73,6 @@ private:
 
     // After any build/improve, check if someone has 10 points.
     void checkForWinner(std::ostream &out);
-};
 
-#endif // GAMECONTROLLER_H
+    void saveBackupOnEOF(std::ostream &out);
+};
