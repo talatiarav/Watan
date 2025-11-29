@@ -5,6 +5,10 @@ import Vertex;
 import BoardView;
 import Colour;
 
+// Represents a goal edge on the board. Tracks its owner, endpoint vertices,
+// and neighbouring edges. Used to check whether a player is allowed to achieve
+// the goal, and notifies the BoardView whenever its state changes.
+
 Edge::Edge(int id)
     : id{id} {}
 
