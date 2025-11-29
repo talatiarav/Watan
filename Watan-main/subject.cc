@@ -1,9 +1,11 @@
-#include "subject.h"
-#include "observer.h"
-#include "vertex.h"
-#include "edge.h"
-#include "tile.h"
-#include <algorithm>
+module Subject;
+
+import <algorithm>;
+
+import Observer;
+import Vertex;
+import Edge;
+import Tile;
 
 Subject::~Subject() {}
 
