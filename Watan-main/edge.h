@@ -3,24 +3,15 @@ export module Edge;
 import <vector>;
 import Colour;
 
-// Forward declarations to avoid circular dependencies at interface level
 class Player;
 class Vertex;
 class BoardView;
 
-/**
- * Edge
- *
- * Represents a single goal edge between two vertices.
- * Roughly the new version of old Goal.
- *
- * State:
- *  - id (0–71)
- *  - owner (Player*, nullptr if unowned)
- *  - endpoints (two Vertex*)
- *  - neighbouring edges (for “adjacent goal” rule)
- *  - a BoardView observer for display
- */
+// Represents a goal edge on the board. Tracks its owner, endpoint vertices,
+// and neighbouring edges. Used to check whether a player is allowed to achieve
+// the goal, and notifies the BoardView whenever its state changes.
+
+
 export class Edge {
     int id;
     Player *owner = nullptr;
@@ -46,11 +37,8 @@ public:
     void addNeighbour(Edge *e);
     const std::vector<Edge *> &getNeighbours() const { return neighbours; }
 
-    // Observer hookup
     void attach(BoardView *view);
 
-    // Rule check: can 'colour' achieve this goal?
-    //
     // Enforces:
     //  - edge is unowned
     //  - at least one endpoint vertex is owned by 'colour' OR
@@ -58,6 +46,5 @@ public:
     bool canBeAchievedBy(Colour colour) const;
 
     // Action: mark as achieved by this player.
-    // (GameBoard handles resource checks & Player bookkeeping.)
     void achieve(Player *p);
 };
