@@ -1,8 +1,9 @@
-#include "edge.h"
+module Edge;
 
-#include "player.h"
-#include "vertex.h"
-#include "boardview.h"
+import Player;
+import Vertex;
+import BoardView;
+import Colour;
 
 Edge::Edge(int id)
     : id{id} {}
