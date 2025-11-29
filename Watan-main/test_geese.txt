@@ -1,0 +1,7 @@
+load
+7
+geese 5
+status
+next
+quit
+

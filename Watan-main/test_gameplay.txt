@@ -1,0 +1,7 @@
+board
+status
+help
+roll
+next
+quit
+
