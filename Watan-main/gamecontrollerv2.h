@@ -6,20 +6,13 @@ import <string>;
 import Colour;
 import GameBoard;
 
-/**
- * GameController
- *
- * High-level orchestration of the game:
- *  - manages turn order
- *  - parses text commands from an input stream
- *  - calls into GameBoard to perform game actions
- *  - enforces basic turn rules (roll once per turn, must roll before next)
- *
- * This replaces the old main.cc + Board-driven loop.
- */
+// Handles the main flow of the game: turns, commands, dice rolling,
+// trading, building actions, saving/loading, and coordinating with the GameBoard.
+// Acts as the controller in the MVC structure, interpreting user input
+// and telling the model (board/players) what actions to perform.
+
 export class GameController {
 public:
-    // Takes ownership of an already-constructed GameBoard.
     explicit GameController(GameBoard &&board);
 
     GameController(GameBoard &&board, Colour startingPlayer);
@@ -36,14 +29,12 @@ private:
     bool awaitingGeesePlacement = false;
     bool quitRequested = false;
 
-    // --- turn / flow helpers ---
     void setupInitialAssignments(std::istream &in, std::ostream &out);
 
     void startNewTurn(std::ostream &out);
     void advancePlayer();
     static std::string colourToString(Colour c);
 
-    // --- command handling ---
     void handleCommand(const std::string &line,
                        std::istream &in,
                        std::ostream &out);
@@ -71,7 +62,6 @@ private:
     void cmdSetFairDice(std::ostream &out);
     void cmdSetLoadedDice(std::ostream &out);
 
-    // After any build/improve, check if someone has 10 points.
     void checkForWinner(std::ostream &out);
 
     void saveBackupOnEOF(std::ostream &out);
