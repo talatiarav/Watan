@@ -1,9 +1,0 @@
-load
-roll
-1
-13
-abc
-5
-next
-quit
-

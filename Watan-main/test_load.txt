@@ -1,4 +1,0 @@
-board
-status
-quit
-

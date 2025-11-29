@@ -1,5 +1,0 @@
-criteria
-next
-criteria
-quit
-

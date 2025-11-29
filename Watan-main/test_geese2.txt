@@ -1,8 +1,0 @@
-load
-roll
-7
-geese 5
-board
-next
-quit
-
