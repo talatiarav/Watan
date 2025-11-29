@@ -1,14 +1,18 @@
-#include "savemanager.h"
+module SaveManager;
 
-#include <fstream>
-#include <sstream>
-#include <stdexcept>
-#include <vector>
+import <fstream>;
+import <sstream>;
+import <stdexcept>;
+import <vector>;
+import <iostream>;
 
-#include "gameboard.h"
-#include "resources.h"
-#include "player.h"
-#include "assessment.h"
+import GameBoard;
+import Resources;
+import Player;
+import Assessment;
+import Colour;
+
+using std::endl;
 
 namespace {
 
@@ -29,7 +33,8 @@ Colour indexToColour(int idx) {
         case 1:  return Colour::Red;
         case 2:  return Colour::Orange;
         case 3:  return Colour::Yellow;
-        default: throw std::runtime_error("Invalid turn index in save file.");
+        default:
+            throw std::runtime_error("Invalid turn index in save file.");
     }
 }
 
@@ -123,7 +128,7 @@ void SaveManager::saveGame(const GameBoard &board,
     }
 
     // Line 1: current turn index
-    out << colourToIndex(currentPlayer) << '\n';
+    out << colourToIndex(currentPlayer) << endl;
 
     // Lines 2–5: players, in fixed order: Blue, Red, Orange, Yellow.
     const auto &players = board.getPlayers();
@@ -135,14 +140,14 @@ void SaveManager::saveGame(const GameBoard &board,
         // Player::encodeForSave() must return:
         // "<numCaffeines> <numLabs> <numLectures> <numStudies> <numTutorials> "
         // "g <goalIds...> c <criterionId state>..."
-        out << p->encodeForSave() << '\n';
+        out << p->encodeForSave() << endl;
     }
 
     // Line 6: board layout
-    out << board.encodeBoardLayoutForSave() << '\n';
+    out << board.encodeBoardLayoutForSave() << endl;
 
     // Line 7: geese tile
-    out << board.getGeeseTile() << '\n';
+    out << board.getGeeseTile() << endl;
 }
 
 GameBoard SaveManager::loadGame(bool enhance,
