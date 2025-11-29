@@ -1,11 +1,9 @@
-#ifndef EDGE_H
-#define EDGE_H
+export module Edge;
 
-#include <vector>
+import <vector>;
+import Colour;
 
-#include "assessment.h"
-#include "colour.h"
-
+// Forward declarations to avoid circular dependencies at interface level
 class Player;
 class Vertex;
 class BoardView;
@@ -23,7 +21,7 @@ class BoardView;
  *  - neighbouring edges (for “adjacent goal” rule)
  *  - a BoardView observer for display
  */
-class Edge {
+export class Edge {
     int id;
     Player *owner = nullptr;
 
@@ -63,5 +61,3 @@ public:
     // (GameBoard handles resource checks & Player bookkeeping.)
     void achieve(Player *p);
 };
-
-#endif // EDGE_H
