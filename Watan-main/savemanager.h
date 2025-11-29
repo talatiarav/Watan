@@ -6,18 +6,10 @@ import Colour;
 
 class GameBoard;
 
-/**
- * SaveManager
- *
- * Responsible for serializing/deserializing the full game state:
- *  - current turn
- *  - players’ data
- *  - board layout
- *  - geese tile
- *
- * For now, we fully implement saveGame (writing) using the
- * watan-savefile.txt format. loadGame is provided as a skeleton/TODO.
- */
+// Handles saving and loading game state to and from files.
+// Reads/writes player data, board configuration, and geese position
+// using the format specified in the Watan project document.
+
 export class SaveManager {
 public:
     // Writes the game to <filename> in the watan-savefile format:
