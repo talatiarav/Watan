@@ -1,24 +1,22 @@
-#include "gameboard.h"
+module GameBoard;
 
-#include <algorithm>
-#include <cstdlib>
-#include <ctime>
-#include <iostream>
-#include <sstream>
-#include <stdexcept>
-#include <random>
+import <algorithm>;
+import <cstdlib>;
+import <ctime>;
+import <iostream>;
+import <sstream>;
+import <stdexcept>;
+import <random>;
+import <map>;
 
-// New enums
-#include "colour.h"
-#include "resources.h"
-#include "assessment.h"
-
-// New core classes
-#include "player.h"
-#include "tile.h"
-#include "vertex.h"
-#include "edge.h"
-#include "boardview.h"
+import Colour;
+import Resources;
+import Assessment;
+import Player;
+import Tile;
+import Vertex;
+import Edge;
+import BoardView;
 
 using std::cout;
 using std::endl;
@@ -224,8 +222,6 @@ int GameBoard::rollDice(Colour activePlayer) {
                 }
             }
         }
-
-        
 
         return roll;
     }
