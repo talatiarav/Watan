@@ -11,6 +11,10 @@ import Assessment;
 
 using std::string;
 
+// the BoardView class represents the View aspect of our MVC model, it's responsible for outputting the Board
+// in an ASCII format. 
+
+// 
 std::string BoardView::centre(const std::string &s, int width) {
     if ((int)s.size() >= width) return s;
     int total = width - static_cast<int>(s.size());
