@@ -50,16 +50,26 @@ int resourceToCode(Resources r) {
     }
 }
 
+std::string resourceToName(Resources r) {
+    switch (r) {
+        case Resources::Caffeine: return "Caffeine";
+        case Resources::Lab:      return "Lab";
+        case Resources::Lecture:  return "Lecture";
+        case Resources::Study:    return "Study";
+        case Resources::Tutorial: return "Tutorial";
+        default:                  return "None";
+    }
+}
+
 GameBoard GameBoard::createRandom(bool enhance) {
-    // Values: one 2, one 12, two each of 3–6 and 8–11, plus 7 for Netflix tile
-    // Total: 19 tiles 
-    std::vector<int> values = {
+    // 18 number tokens (no 7):
+    // one 2, one 12, and two each of 3–6 and 8–11.
+    std::vector<int> chits = {
         2,
         3, 3,
         4, 4,
         5, 5,
         6, 6,
-        7,        // Netflix/desert tile (doesn't produce)
         8, 8,
         9, 9,
         10, 10,
@@ -67,25 +77,53 @@ GameBoard GameBoard::createRandom(bool enhance) {
         12
     };
 
-    // Resources: 3 TUTORIAL, 3 STUDY, 4 CAFFEINE, 4 LAB, 4 LECTURE, 1 NETFLIX
-    // Total: 19 tiles
+    // 19 resource tiles, including one Netflix (desert).
     std::vector<Resources> resTypes = {
         Resources::Tutorial, Resources::Tutorial, Resources::Tutorial,
         Resources::Study,    Resources::Study,    Resources::Study,
-        Resources::Caffeine, Resources::Caffeine, Resources::Caffeine, Resources::Caffeine,
-        Resources::Lab,      Resources::Lab,      Resources::Lab,      Resources::Lab,
-        Resources::Lecture,  Resources::Lecture,  Resources::Lecture,  Resources::Lecture,
+        Resources::Caffeine, Resources::Caffeine,
+        Resources::Caffeine, Resources::Caffeine,
+        Resources::Lab,      Resources::Lab,
+        Resources::Lab,      Resources::Lab,
+        Resources::Lecture,  Resources::Lecture,
+        Resources::Lecture,  Resources::Lecture,
         Resources::Netflix
     };
 
-    // Use std::rand() to seed the mt19937 engine
-    // This way it respects the global seed set by std::srand() in main
-    std::mt19937 gen(std::rand());
+    // RNG
+    std::random_device rd;
+    std::mt19937 gen(rd());
 
-    std::shuffle(values.begin(), values.end(), gen);
+    // Shuffle resources first
     std::shuffle(resTypes.begin(), resTypes.end(), gen);
 
+    // Find the Netflix (desert) tile index
+    int netflixIndex = -1;
+    for (int i = 0; i < static_cast<int>(resTypes.size()); ++i) {
+        if (resTypes[i] == Resources::Netflix) {
+            netflixIndex = i;
+            break;
+        }
+    }
+    if (netflixIndex == -1) {
+        throw std::runtime_error("createRandom: no Netflix tile in resources list.");
+    }
 
+    // Shuffle the 18 chits
+    std::shuffle(chits.begin(), chits.end(), gen);
+
+    // Build 19 values: 0 for Netflix, other tiles get chits
+    std::vector<int> values(resTypes.size(), 0);
+    int chitPos = 0;
+    for (int i = 0; i < static_cast<int>(values.size()); ++i) {
+        if (i == netflixIndex) {
+            values[i] = 0;            // desert / Netflix has no number
+        } else {
+            values[i] = chits[chitPos++];
+        }
+    }
+
+    // Now we have 19 tiles, 18 real numbers (no 7), and one 0 for Netflix.
     return GameBoard{enhance, values, resTypes};
 }
 
@@ -137,6 +175,23 @@ void GameBoard::initializeBoardGraph(const std::vector<int> &values,
     //    know which Tiles it touches.
     wireTiles(n);
 
+    // NEW: wire edge neighbours so roads can extend along your network
+    for (auto &vPtr : vertices) {
+        Vertex *v = vPtr.get();
+        const auto &inc = v->getIncidentEdges();
+
+        for (size_t i = 0; i < inc.size(); ++i) {
+            for (size_t j = i + 1; j < inc.size(); ++j) {
+                Edge *e1 = inc[i];
+                Edge *e2 = inc[j];
+                if (e1 && e2) {
+                    e1->addNeighbour(e2);
+                    e2->addNeighbour(e1);
+                }
+            }
+        }
+    }
+
     geeseTile = -1;
 }
 
@@ -170,25 +225,69 @@ int GameBoard::rollDice(Colour activePlayer) {
             }
         }
 
-        // GameController will now:
-        //  - ask the user where to move the geese
-        //  - call moveGeese(...)
-        //  - handle stealing
+        
+
         return roll;
     }
 
-    // Non-7 roll: resource distribution.
-    bool sent = false;
+    // --- Snapshot resources BEFORE distribution ---
+    // Only the 5 real resources; ignore Netflix/None.
+    const Resources tracked[5] = {
+        Resources::Caffeine,
+        Resources::Lab,
+        Resources::Lecture,
+        Resources::Study,
+        Resources::Tutorial
+    };
+
+    // before[colour][resource] = count
+    std::map<Colour, std::map<Resources,int>> before;
+    for (const auto &pl : players) {
+        Colour c = pl->getColour();
+        for (Resources r : tracked) {
+            before[c][r] = pl->getResourceCount(r);
+        }
+    }
+
+    // --- Distribute resources (no printing here) ---
     for (auto &t : tiles) {
         if (t->getValue() == roll) {
-            if (t->sendResources()) {
-                sent = true;
+            t->sendResources();   // updates players
+        }
+    }
+
+    // --- Compute deltas and print per student in colour order ---
+    bool anyGained = false;
+    const Colour order[4] = {
+        Colour::Blue, Colour::Red, Colour::Orange, Colour::Yellow
+    };
+
+    for (Colour c : order) {
+        Player *pl = findPlayer(c);
+        if (!pl) continue;
+
+        std::vector<std::pair<Resources,int>> gains;
+
+        for (Resources r : tracked) {
+            int beforeCount = before[c][r];
+            int afterCount  = pl->getResourceCount(r);
+            int diff        = afterCount - beforeCount;
+            if (diff > 0) {
+                gains.emplace_back(r, diff);
+            }
+        }
+
+        if (!gains.empty()) {
+            anyGained = true;
+            std::cout << "Student " << c << " gained:" << std::endl;
+            for (auto &g : gains) {
+                std::cout << g.second << " " << resourceToName(g.first) << std::endl;
             }
         }
     }
 
-    if (!sent) {
-        cout << "No students gained resources." << endl;
+    if (!anyGained) {
+        std::cout << "No students gained resources." << std::endl;
     }
 
     return roll;
@@ -227,8 +326,21 @@ void GameBoard::completeVertex(Colour playerColour, int vertexId) {
         throw std::runtime_error("completeVertex: invalid vertex id.");
     }
 
-    if (!v->canBeCompletedBy(playerColour)) {
+    bool hasAdjacentOwnedGoal = false;
+    for (Edge *e : v->getIncidentEdges()) {
+        if (e && e->getOwnerColour() == playerColour) {
+            hasAdjacentOwnedGoal = true;
+            break;
+        }
+    }
+
+    if (!hasAdjacentOwnedGoal) {
+        // We are not in the setup phase here, so we must enforce the road rule.
         throw std::runtime_error("You cannot build here.");
+    }
+
+    if (!v->canBeCompletedBy(playerColour)) {
+        throw std::runtime_error("You cannot build here. Vertex");
     }
 
     if (!p->resourcesCheck(Assessment::Assignment)) {
