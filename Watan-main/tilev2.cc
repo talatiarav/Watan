@@ -10,6 +10,11 @@ import Assessment;
 import Resources;
 import Colour;
 
+// Represents a single board tile with a resource type and value.
+// Tracks which criteria surround it and whether the GEESE are on it.
+// Used to determine resource production when dice are rolled.
+
+
 // Constructor: initialize tile with given id, resource type, and dice value
 Tile::Tile(int id, Resources resource, int value)
   : id{id}, value{value}, resource{resource}, geeseHere{false}, vertices{} {}
