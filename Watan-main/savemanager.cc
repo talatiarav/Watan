@@ -14,6 +14,11 @@ import Colour;
 
 using std::endl;
 
+
+// Handles saving and loading game state to and from files.
+// Reads/writes player data, board configuration, and geese position
+// using the format specified in the Watan project document.
+
 namespace {
 
 // 0=Blue,1=Red,2=Orange,3=Yellow
@@ -106,7 +111,6 @@ PlayerSaveData parsePlayerLine(const std::string &line) {
                 pendingVertexId = -1;
             }
         } else {
-            // token before 'g' – shouldn't happen in valid saves, but ignore
         }
     }
 
@@ -238,12 +242,12 @@ GameBoard SaveManager::loadGame(bool enhance,
             data.tut
         );
 
-        // 2. Roads (edges)
+        // 2. edges
         for (int edgeId : data.edgeIds) {
             board.setEdgeForLoad(colour, edgeId);
         }
 
-        // 3. Residences (vertices)
+        // 3. vertices
         for (auto &pair : data.vertexLevels) {
             int vertexId = pair.first;
             int level    = pair.second;
