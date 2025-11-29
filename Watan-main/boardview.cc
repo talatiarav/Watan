@@ -1,10 +1,13 @@
-#include "boardview.h"
+module BoardView;
 
-#include <iostream>
-#include <sstream>
+import <iostream>;
+import <sstream>;
 
-#include "vertex.h"
-#include "edge.h"
+import Vertex;
+import Edge;
+import Colour;
+import Resources;
+import Assessment;
 
 using std::string;
 
@@ -87,7 +90,7 @@ void BoardView::notify(Vertex *vertex) {
         } else if (c == Colour::Orange) {
             toReplace += "\u001b[38;5;208;1mO";
         } else if (c == Colour::Yellow) {
-            toReplace += "\u001b[38;5;226;1mY";  // Bright yellow
+            toReplace += "\u001b[38;5;226;1mY";  // Bright yellow (unchanged)
         }
     } else {
         if (c == Colour::Blue)    toReplace += "B";
@@ -127,7 +130,7 @@ void BoardView::notify(Edge *edge) {
         } else if (c == Colour::Orange) {
             toReplace += "\u001b[38;5;208;1mO";
         } else if (c == Colour::Yellow) {
-            toReplace += "\u001b[38;5;226;1mY";  // Brighter yellow
+            toReplace += "\u001b[38;5;226;1mY";  // Brighter yellow (unchanged)
         }
         toReplace += "A\u001B[0m";
     } else {
