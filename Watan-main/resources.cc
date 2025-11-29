@@ -2,6 +2,11 @@ module Resources;
 
 import <iostream>;
 
+// Implements helper functions for working with resource types.
+// Provides string conversions, printing, and any utility logic
+// used throughout the game for handling resource names and values.
+
+
 std::ostream &operator<<(std::ostream &out, Resources resource) {
     switch (resource) {
         case Resources::Caffeine: return out << "Caffeine";
