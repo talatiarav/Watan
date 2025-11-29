@@ -14,6 +14,13 @@ import Vertex;
 import Edge;
 import BoardView;
 
+
+// Manages all core game logic and state for the Watan board.
+// Tracks tiles, vertices, edges, resources, geese position, and player actions.
+// Provides the rules for completing/improving criteria, achieving goals,
+// distributing resources, moving geese, and updating the BoardView.
+
+
 export class GameBoard {
 public:
     // Construct from explicit tile values/resources (size 19 each).
@@ -52,7 +59,7 @@ public:
 
     // Board layout in watan-savefile format:
     //  "<res0> <val0> <res1> <val1> ... <res18> <val18>"
-    // with res codes: 0=Caff,1=Lab,2=Lect,3=Study,4=Tut,5=Netflix
+    // with res codes: 0=Caff,1=Lab,2=Lect,3=Study,4=Tut,5=nflx
     std::string encodeBoardLayoutForSave() const;
 
     // Load-only helpers: set edges/vertices from save without resource checks.
@@ -86,7 +93,6 @@ private:
                               const std::vector<Resources> &resources,
                               bool enhance);
 
-    // Topology helpers (ported from old Board::rowSetup / update / updateCriterionsInTile)
     void setupRows(int n,
                    std::vector<std::vector<Vertex *>> &vertexRows,
                    std::vector<std::vector<Edge   *>> &edgeRows);
@@ -95,10 +101,8 @@ private:
                   const std::vector<std::vector<Vertex *>> &vertexRows,
                   const std::vector<std::vector<Edge   *>> &edgeRows);
 
-    // New: wire tiles to vertices using the same indexing pattern as old Board
     void wireTiles(int n);
 
-    // New: helper analogous to criterionAdderHelper
     void addVerticesForTile(int &vertexIndex, int tileId);
 
     // Lookups
