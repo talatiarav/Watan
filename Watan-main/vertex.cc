@@ -1,9 +1,12 @@
-#include "vertex.h"
+module Vertex;
 
-#include "player.h"
-#include "edge.h"
-#include "tile.h"
-#include "boardview.h"
+import Vertex;
+import Player;
+import Edge;
+import Tile;
+import BoardView;
+import Assessment;
+import Colour;
 
 Vertex::Vertex(int id)
     : id{id} {}
