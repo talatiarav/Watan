@@ -1,9 +1,6 @@
 export module Assessment;
 
-// Single source of truth for “what’s built” at a location.
-// - On Vertex: Assignment / Midterm / Exam
-// - On Edge: Achievement
-// - Or None (unbuilt)
+// enum class that lists the different types of assessments
 export enum class Assessment {
     Achievement,
     Assignment,
