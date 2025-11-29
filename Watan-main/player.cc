@@ -22,6 +22,11 @@ using std::cout;
 using std::endl;
 using std::string;
 
+
+// Represents a student/player in the game. Tracks their colour, resources,
+// completed criteria, achieved goals, and chosen dice type. Provides functions
+// for gaining/using resources, building, upgrading criteria, and reporting status.
+
 namespace {
 
 // Order in save file: Caff, Lab, Lect, Study, Tut
@@ -43,18 +48,15 @@ int assessmentLevel(Assessment a) {
 } // namespace
 
 
-// --- ctor ---
 
 Player::Player(Colour colour)
     : colour{colour} {}
 
-// --- dice ---
 
 void Player::setDice(std::unique_ptr<Dice> newDice) {
     dice = std::move(newDice);
 }
 
-// --- resources / ownership ---
 
 void Player::addResources(Resources resource, int amount) {
     resources[resource] += amount;
@@ -81,7 +83,6 @@ void Player::addEdge(Edge *e) {
     ownedEdges.emplace_back(e);
 }
 
-// --- saving ---
 
 std::string Player::encodeResourcesForSave() const {
     auto getCount = [this](Resources r) {
@@ -113,7 +114,7 @@ std::string Player::encodeGoalsForSave() const {
         if (!e) continue;
         if (!first) oss << ' ';
         first = false;
-        oss << e->getId(); // assumes Edge has getId()
+        oss << e->getId(); 
     }
     return oss.str();
 }
@@ -331,7 +332,6 @@ void Player::reset() {
     dice.reset();
 }
 
-// --- printing / status ---
 
 std::string Player::formatResourcesStatus() const {
     auto get = [this](Resources r) {
