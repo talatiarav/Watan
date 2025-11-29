@@ -1,15 +1,11 @@
-#ifndef _LOADED_H_
-#define _LOADED_H_
+export module Loaded;
 
-#include "dice.h"
+import Dice;
 
-class Loaded: public Dice {
-	int value;
-	public:
-	Loaded(); //ctor
-	void setDie(int num);
-	int roll();
+export class Loaded : public Dice {
+    int value;
+public:
+    Loaded(); //ctor
+    void setDie(int num);
+    int roll();
 };
-
-#endif
-
