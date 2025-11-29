@@ -10,19 +10,11 @@ class Edge;
 class Tile;
 class BoardView;
 
-/**
- * Vertex
- *
- * Represents a single board intersection / course criterion.
- * Roughly the new version of the old Criterion class.
- *
- * State:
- *  - id (0–53)
- *  - owner (Player*, nullptr if unowned)
- *  - assessment (None / Assignment / Midterm / Exam)
- *  - adjacency: neighbouring vertices, incident edges, adjacent tiles
- *  - a single BoardView observer (for ASCII rendering)
- */
+// Represents a course criterion location on the board.
+// Tracks its owner, current assessment level, and neighbouring edges/vertices.
+// Used to check whether a player can complete or upgrade a criterion,
+// and notifies the BoardView whenever its state changes.
+
 export class Vertex {
     int id;
     Player *owner = nullptr;
@@ -66,9 +58,6 @@ public:
     //  - not already occupied
     //  - no neighbouring vertex is occupied
     //
-    // NOTE: The spec also requires adjacency to an owned goal except
-    // during setup. That can be layered on later (either here or by
-    // having GameBoard/GameController call a different API during setup).
     bool canBeCompletedBy(Colour colour) const;
 
     // Can 'colour' improve this vertex (Assignment->Midterm->Exam)?
@@ -77,7 +66,6 @@ public:
     // Actions (GameBoard should call these only after rules + resources
     // are checked)
     //
-    // complete: set owner and move to Assignment
     void complete(Player *p);
 
     // improve: Assignment->Midterm, Midterm->Exam
