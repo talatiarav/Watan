@@ -13,6 +13,13 @@ import Colour;
 
 using std::endl;
 
+
+// Handles the main flow of the game: turns, commands, dice rolling,
+// trading, building actions, saving/loading, and coordinating with the GameBoard.
+// Acts as the controller in the MVC structure, interpreting user input
+// and telling the model (board/players) what actions to perform.
+
+
 namespace {
 
 bool parseColour(const std::string &s, Colour &out) {
@@ -54,7 +61,7 @@ GameController::GameController(GameBoard &&b, Colour startingPlayer)
       quitRequested(false) {}
 
 GameController::GameController(GameBoard &&b)
-    : GameController(std::move(b), Colour::Blue) {}  // your old behavior
+    : GameController(std::move(b), Colour::Blue) {}  
 
 // --- static helpers ---
 
@@ -121,8 +128,6 @@ void GameController::startNewTurn(std::ostream &out) {
 
     out << "Student " << colourToString(currentPlayer) << "'s turn." << endl;
 
-    // Spec says: "followed by the status of the student".
-    // Our GameBoard::printStatus prints all students, which is fine / even nicer.
     board.printStatus(out);
 }
 
@@ -153,8 +158,6 @@ void GameController::run(std::istream &in, std::ostream &out, bool loadedFile) {
         try {
             handleCommand(line, in, out);
         } catch (const std::exception &e) {
-            // GameBoard throws with spec strings for build/resource errors,
-            // so just print the message.
             out << e.what() << endl;
         }
 
@@ -176,7 +179,6 @@ void GameController::run(std::istream &in, std::ostream &out, bool loadedFile) {
     }
 }
 
-// --- command parsing ---
 
 void GameController::handleCommand(const std::string &line,
                                    std::istream &in,
@@ -197,7 +199,7 @@ void GameController::handleCommand(const std::string &line,
         }
 
         try {
-            cmdGeese(tileId, in, out);   // this should call board.moveGeese(...)
+            cmdGeese(tileId, in, out);  
             awaitingGeesePlacement = false;
         } catch (const std::exception &e) {
             out << e.what() << endl;
@@ -207,26 +209,25 @@ void GameController::handleCommand(const std::string &line,
         return; // don't treat this as a normal command
     }
 
-    // Commands that *logically* belong to the "after roll" phase.
+    // Commands that logically belong to the after roll phase.
     auto isBuildOrTradeCommand = [](const std::string &c) {
         return c == "achieve" || c == "complete" ||
                c == "improve" || c == "trade";
     };
 
-    // Spec 4.2 / 4.3: you must roll before building or trading.
+    // you must roll before building or trading.
     if (!rolledThisTurn && isBuildOrTradeCommand(cmd)) {
         out << "You must roll before building or trading." << endl;
         return;
     }
 
-    // Spec 4.2: load/fair are beginning-of-turn choices; once you've rolled,
+    // load/fair are beginning-of-turn choices; once you've rolled,
     // you shouldn't be able to change dice type for this turn.
     if (rolledThisTurn && (cmd == "load" || cmd == "fair")) {
         out << "You must choose your dice before rolling." << endl;
         return;
     }
 
-    // Normalize to lowercase if you want; for now assume lower-case input.
     if (cmd == "help") {
         cmdHelp(out);
     } else if (cmd == "board") {
@@ -351,7 +352,6 @@ void GameController::cmdRoll(std::istream &in, std::ostream &out) {
             out << "Input a roll between 2 and 12:" << endl;
             out << "> ";
             if (!(in >> toLoad)) {
-                // bad input: clear and ignore one token
                 in.clear();
                 std::string junk;
                 in >> junk;
@@ -388,7 +388,6 @@ void GameController::cmdGeese(int tileId, std::istream &in, std::ostream &out) {
     }
 
     // Move the geese; GameBoard will validate tileId.
-    // If this throws, let the exception propagate so handleCommand knows it failed
     board.moveGeese(currentPlayer, tileId);
 
     // Determine who can be stolen from on this tile.
@@ -420,7 +419,6 @@ void GameController::cmdGeese(int tileId, std::istream &in, std::ostream &out) {
 
     while (true) {
         if (!(in >> targetStr)) {
-            // Input error / EOF: just bail out gracefully.
             in.clear();
             return;
         }
@@ -462,7 +460,6 @@ void GameController::cmdGeese(int tileId, std::istream &in, std::ostream &out) {
         return;
     }
 
-    // Build a pool of resource cards proportional to counts.
     std::vector<Resources> pool;
     pool.reserve(totalRes);
 
@@ -580,7 +577,6 @@ void GameController::cmdTrade(const std::string &targetStr,
         throw std::runtime_error("Internal error: current player not found");
     }
 
-    // ----- Bank trade: 4 of give for 1 of take -----
     if (bankTrade) {
         if (me->getResourceCount(give) < 4) {
             out << "Student " << currentPlayer << " does not have enough "
@@ -610,7 +606,6 @@ void GameController::cmdTrade(const std::string &targetStr,
         return;
     }
 
-    // ----- Player-to-player trade -----
     if (otherColour == currentPlayer) {
         out << "You cannot trade with yourself." << endl;
         return;
@@ -699,7 +694,6 @@ void GameController::saveBackupOnEOF(std::ostream &out) {
         saver.saveGame(board, currentPlayer, "backup.sv");
         out << "Game ended unexpectedly, saving game to backup.sv." << endl;
     } catch (const std::exception &e) {
-        // If something goes wrong, at least say so.
         out << "Game ended unexpectedly; failed to save backup.sv: "
             << e.what() << endl;
     }
