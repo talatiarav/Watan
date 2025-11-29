@@ -4,10 +4,10 @@ import <vector>;
 
 class Observer;
 
-/**
- * Subject base class for observable board elements (Vertex, Edge, Tile).
- * Maintains a list of observers (e.g., BoardView) and notifies them on changes.
- */
+// Base class for observable objects in the game (e.g., vertices and edges).
+// Allows observers like BoardView to attach and be notified when the subject changes,
+// enabling automatic board updates without tight coupling.
+
 export class Subject {
 private:
     std::vector<Observer*> observers;
