@@ -27,9 +27,6 @@ public:
     //
     //   - `enhance` is passed through to GameBoard ctor (for BoardView style)
     //   - `currentPlayerOut` is set to the player whose turn it is
-    //
-    // You will need to finish the player/graph reconstruction logic once
-    // your Player/Vertex/Edge APIs are fully settled.
     static GameBoard loadGame(bool enhance,
                               const std::string &filename,
                               Colour &currentPlayerOut);
