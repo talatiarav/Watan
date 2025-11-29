@@ -1,17 +1,16 @@
-#ifndef PLAYER_H
-#define PLAYER_H
+export module Player;
 
-#include <iosfwd>
-#include <map>
-#include <memory>
-#include <string>
-#include <vector>
-#include <iostream>
+import <iosfwd>;
+import <map>;
+import <memory>;
+import <string>;
+import <vector>;
+import <iostream>;
 
-#include "colour.h"
-#include "resources.h"
-#include "assessment.h"
-#include "dice.h"
+import Colour;
+import Resources;
+import Assessment;
+import Dice;
 
 // Forward declarations to avoid circular include.
 class Vertex;
@@ -29,7 +28,7 @@ class Edge;
  *      * encode itself into the savefile format
  *      * print status / completed criteria summaries
  */
-class Player {
+export class Player {
     Colour colour;
     std::map<Resources, int> resources;
     std::vector<Vertex *>    ownedVertices; // in order of completion
@@ -48,7 +47,7 @@ public:
     // characterizes the dice effectively
     void setDice(std::unique_ptr<Dice> newDice);
 
-        // Dice control
+    // Dice control
     void useFairDice();
     void useLoadedDice();
     bool isLoadedDice() const;
@@ -119,7 +118,7 @@ public:
     // Serialize this player's state in watan-savefile format:
     // "<Caff> <Lab> <Lect> <Study> <Tut> g <edges...> c <vertex level>..."
 
-        // For SaveManager: overwrite this player's resources with the given counts.
+    // For SaveManager: overwrite this player's resources with the given counts.
     void setResourcesFromSave(int caffeines,
                               int labs,
                               int lectures,
@@ -135,5 +134,3 @@ private:
     // "<numCaffeines> caffeines, <numLabs> labs, <numLectures> lectures, <numStudies> studies, and <numTutorials> tutorials"
     std::string formatResourcesStatus() const;
 };
-
-#endif // PLAYER_H
