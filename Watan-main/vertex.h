@@ -1,9 +1,9 @@
-#ifndef VERTEX_H
-#define VERTEX_H
+export module Vertex;
 
-#include <vector>
-#include "assessment.h"
-#include "colour.h"
+import <vector>;
+
+import Assessment;
+import Colour;
 
 class Player;
 class Edge;
@@ -23,7 +23,7 @@ class BoardView;
  *  - adjacency: neighbouring vertices, incident edges, adjacent tiles
  *  - a single BoardView observer (for ASCII rendering)
  */
-class Vertex {
+export class Vertex {
     int id;
     Player *owner = nullptr;
     Assessment assessment = Assessment::None;
@@ -83,5 +83,3 @@ public:
     // improve: Assignment->Midterm, Midterm->Exam
     void improve();
 };
-
-#endif // VERTEX_H
