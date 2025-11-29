@@ -8,6 +8,12 @@ import BoardView;
 import Assessment;
 import Colour;
 
+// Represents a course criterion location on the board.
+// Tracks its owner, current assessment level, and neighbouring edges/vertices.
+// Used to check whether a player can complete or upgrade a criterion,
+// and notifies the BoardView whenever its state changes.
+
+
 Vertex::Vertex(int id)
     : id{id} {}
 
