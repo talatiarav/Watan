@@ -1,10 +1,13 @@
-#include "boardview.h"
+module BoardView;
 
-#include <iostream>
-#include <sstream>
+import <iostream>;
+import <sstream>;
 
-#include "vertex.h"
-#include "edge.h"
+import Vertex;
+import Edge;
+import Colour;
+import Resources;
+import Assessment;
 
 using std::string;
 
