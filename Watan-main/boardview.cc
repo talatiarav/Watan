@@ -11,10 +11,11 @@ import Assessment;
 
 using std::string;
 
-// the BoardView class represents the View aspect of our MVC model, it's responsible for outputting the Board
-// in an ASCII format. 
+// This class is the View in our MVC setup. It prints the Watan board in ASCII form.
+// It keeps track of what each vertex and edge should look like, updates them when the model changes,
+// and draws the full board with resources, values, and the GEESE when render() is called.
 
-// 
+
 std::string BoardView::centre(const std::string &s, int width) {
     if ((int)s.size() >= width) return s;
     int total = width - static_cast<int>(s.size());
@@ -28,7 +29,6 @@ BoardView::BoardView(bool enhance,
                      const std::vector<Resources> &resources)
     : enhance{enhance}
 {
-    // --- init criteria/goals as numbers ---
     criteriaString.resize(54);
     for (int i = 0; i < 54; ++i) {
         if (i < 10) criteriaString[i] = " " + std::to_string(i);
@@ -41,7 +41,6 @@ BoardView::BoardView(bool enhance,
         else        goalsString[i] = std::to_string(i);
     }
 
-    // --- init per-tile strings ---
     resourcesString.resize(19);
     valuesString.resize(19);
 
@@ -79,7 +78,7 @@ void BoardView::notify(Vertex *vertex) {
     if (idx < 0 || idx >= static_cast<int>(criteriaString.size())) return;
 
     if (a == Assessment::None) {
-        // If "un-built", leave the numeric label
+        // If un-built leave the numeric label
         return;
     }
 
@@ -94,7 +93,7 @@ void BoardView::notify(Vertex *vertex) {
         } else if (c == Colour::Orange) {
             toReplace += "\u001b[38;5;208;1mO";
         } else if (c == Colour::Yellow) {
-            toReplace += "\u001b[38;5;226;1mY";  // Bright yellow (unchanged)
+            toReplace += "\u001b[38;5;226;1mY";  // Bright yellow 
         }
     } else {
         if (c == Colour::Blue)    toReplace += "B";
@@ -123,7 +122,6 @@ void BoardView::notify(Edge *edge) {
 
     if (idx < 0 || idx >= static_cast<int>(goalsString.size())) return;
 
-    // For goals, spec only has Achievement, so we always draw '*A*-like'
     string toReplace;
 
     if (enhance) {
@@ -134,7 +132,7 @@ void BoardView::notify(Edge *edge) {
         } else if (c == Colour::Orange) {
             toReplace += "\u001b[38;5;208;1mO";
         } else if (c == Colour::Yellow) {
-            toReplace += "\u001b[38;5;226;1mY";  // Brighter yellow (unchanged)
+            toReplace += "\u001b[38;5;226;1mY";  
         }
         toReplace += "A\u001B[0m";
     } else {
@@ -196,7 +194,6 @@ void BoardView::render(std::ostream &out) const {
             out << "   ";
         }
 
-        // Resource / geese lines (hex insides)
         if (lineNum == 2) {
             out << "/            \\" << std::endl;
             ++lineNum;
@@ -379,7 +376,6 @@ void BoardView::render(std::ostream &out) const {
             }
             odd = false;
         } else {
-            // Even lines show only goals and tile numbers
             while (numGoal < evenGoalPerLine) {
                 if (numGoal > 0) {
                     if (lineNum == 3) {
