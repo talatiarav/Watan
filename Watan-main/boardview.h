@@ -8,20 +8,13 @@ import Colour;
 import Resources;
 import Assessment;
 
-// Forward declarations to avoid circular includes
 class Vertex;
 class Edge;
 
-/**
- * BoardView
- *
- * ASCII text display for the Watan board.
- * Refactor of old TextDisplay:
- *  - tracks criteria (vertices) and goals (edges) display tokens
- *  - tracks tile resources, values, and indices
- *  - tracks geese position
- *  - supports enhanced (coloured) and plain modes
- */
+// This class is the View in our MVC setup. It prints the Watan board in ASCII form.
+// It keeps track of what each vertex and edge should look like, updates them when the model changes,
+// and draws the full board with resources, values, and the GEESE when render() is called.
+
 export class BoardView {
     int  geeseAt  = -1;
     bool enhance  = false;
@@ -43,7 +36,6 @@ export class BoardView {
         "      17     ", "      18     "
     };
 
-    // Helpers
     static std::string centre(const std::string &s, int width);
 
 public:
