@@ -1,9 +1,8 @@
-#ifndef SAVEMANAGER_H
-#define SAVEMANAGER_H
+export module SaveManager;
 
-#include <string>
+import <string>;
 
-#include "colour.h"
+import Colour;
 
 class GameBoard;
 
@@ -19,7 +18,7 @@ class GameBoard;
  * For now, we fully implement saveGame (writing) using the
  * watan-savefile.txt format. loadGame is provided as a skeleton/TODO.
  */
-class SaveManager {
+export class SaveManager {
 public:
     // Writes the game to <filename> in the watan-savefile format:
     //
@@ -43,5 +42,3 @@ public:
                               const std::string &filename,
                               Colour &currentPlayerOut);
 };
-
-#endif // SAVEMANAGER_H
