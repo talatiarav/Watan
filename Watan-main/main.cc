@@ -1,17 +1,17 @@
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <stdexcept>
-#include <string>
-#include <vector>
-#include <cstdlib>
-#include <ctime>
+import <iostream>;
+import <fstream>;
+import <sstream>;
+import <stdexcept>;
+import <string>;
+import <vector>;
+import <cstdlib>;
+import <ctime>;
 
-#include "gameboard.h"
-#include "gamecontroller.h"
-#include "savemanager.h"
-#include "resources.h"
-#include "colour.h"
+import GameBoard;
+import GameController;
+import SaveManager;
+import Resources;
+import Colour;
 
 // Helper to map layout file resource codes to Resources.
 // 0 = CAFFEINE, 1 = LAB, 2 = LECTURE, 3 = STUDY, 4 = TUTORIAL, 5 = NETFLIX
@@ -113,7 +113,7 @@ int main(int argc, char *argv[]) {
             }
 
             GameController controller(std::move(board), startingPlayer);
-            playAgain = controller.run(std::cin, std::cout);
+            playAgain = controller.run(std::cin, std::cout, !loadFile.empty());
             
             // After first game, clear the load file so subsequent games are fresh
             if (playAgain) {
