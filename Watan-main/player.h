@@ -12,22 +12,14 @@ import Resources;
 import Assessment;
 import Dice;
 
-// Forward declarations to avoid circular include.
 class Vertex;
 class Edge;
 
-/**
- * Player
- *
- * Refactor of old Student:
- *  - Tracks colour, resources, owned vertices (criteria) and edges (goals).
- *  - Knows how to:
- *      * roll its dice
- *      * check/spend resources for builds/improvements
- *      * lose resources to the geese
- *      * encode itself into the savefile format
- *      * print status / completed criteria summaries
- */
+// Represents a student/player in the game. Tracks their colour, resources,
+// completed criteria, achieved goals, and chosen dice type. Provides functions
+// for gaining/using resources, building, upgrading criteria, and reporting status.
+
+
 export class Player {
     Colour colour;
     std::map<Resources, int> resources;
@@ -106,7 +98,6 @@ public:
     // Clear everything (used when resetting game state).
     void reset();
 
-    // --- printing / status ---
 
     // "<colour> has <numCC> course criteria, <numCaffeines> caffeines, <numLabs> labs, <numLectures> lectures, <numStudies> studies, and <numTutorials> tutorials."
     void printStatus(std::ostream &out) const;
@@ -115,7 +106,6 @@ public:
     // "<colour> has completed:\n<vertexId> <upgradeNum>\n..."
     void printCriteria(std::ostream &out) const;
 
-    // Serialize this player's state in watan-savefile format:
     // "<Caff> <Lab> <Lect> <Study> <Tut> g <edges...> c <vertex level>..."
 
     // For SaveManager: overwrite this player's resources with the given counts.
@@ -130,7 +120,6 @@ public:
     void removeResource(Resources r, int amount);
 
 private:
-    // Helper to format the resource counts as a human-readable string.
-    // "<numCaffeines> caffeines, <numLabs> labs, <numLectures> lectures, <numStudies> studies, and <numTutorials> tutorials"
+
     std::string formatResourcesStatus() const;
 };
