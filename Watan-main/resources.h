@@ -1,9 +1,8 @@
-#ifndef RESOURCES_H
-#define RESOURCES_H
+export module Resources;
 
-#include <iosfwd>
+import <iosfwd>;
 
-enum class Resources {
+export enum class Resources {
     Caffeine,
     Lab,
     Lecture,
@@ -13,6 +12,4 @@ enum class Resources {
     None
 };
 
-std::ostream &operator<<(std::ostream &out, Resources resource);
-
-#endif
+export std::ostream &operator<<(std::ostream &out, Resources resource);
