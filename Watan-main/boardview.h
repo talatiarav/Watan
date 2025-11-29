@@ -1,13 +1,12 @@
-#ifndef BOARDVIEW_H
-#define BOARDVIEW_H
+export module BoardView;
 
-#include <iosfwd>
-#include <string>
-#include <vector>
+import <iosfwd>;
+import <string>;
+import <vector>;
 
-#include "colour.h"
-#include "resources.h"
-#include "assessment.h"
+import Colour;
+import Resources;
+import Assessment;
 
 // Forward declarations to avoid circular includes
 class Vertex;
@@ -23,7 +22,7 @@ class Edge;
  *  - tracks geese position
  *  - supports enhanced (coloured) and plain modes
  */
-class BoardView {
+export class BoardView {
     int  geeseAt  = -1;
     bool enhance  = false;
 
@@ -61,5 +60,3 @@ public:
     // Render whole board
     void render(std::ostream &out) const;
 };
-
-#endif // BOARDVIEW_H
