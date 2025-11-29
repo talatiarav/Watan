@@ -1,20 +1,22 @@
-#include "player.h"
+module Player;
 
-#include <algorithm> // std::random_shuffle
-#include <cstdlib>
-#include <ctime>
-#include <iostream>
-#include <sstream>
-#include <map>
-#include <random>
+import <algorithm>;
+import <cstdlib>;
+import <ctime>;
+import <iostream>;
+import <sstream>;
+import <map>;
+import <random>;
+import <vector>;
 
-#include "dice.h"
-#include "vertex.h"
-#include "edge.h"
-#include "assessment.h"
-#include "resources.h"
-#include "fair.h"
-#include "loaded.h"
+import Dice;
+import Vertex;
+import Edge;
+import Assessment;
+import Resources;
+import Fair;
+import Loaded;
+import Colour;
 
 using std::cout;
 using std::endl;
@@ -358,11 +360,11 @@ void Player::printStatus(std::ostream &out) const {
     out << colour << " has "
         << getPoints() << " course criteria, "
         << formatResourcesStatus()
-        << std::endl;
+        << endl;
 }
 
 void Player::printCriteria(std::ostream &out) const {
-    out << colour << " has completed:" << std::endl;
+    out << colour << " has completed:" << endl;
     for (Vertex *v : ownedVertices) {
         if (!v) continue;
         Assessment a = v->currentAssessment();
@@ -372,7 +374,7 @@ void Player::printCriteria(std::ostream &out) const {
         else if (a == Assessment::Exam)       level = 3;
         else                                  continue;
 
-        out << v->getId() << ' ' << level << std::endl;
+        out << v->getId() << ' ' << level << endl;
     }
 }
 
