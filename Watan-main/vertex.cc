@@ -37,20 +37,47 @@ void Vertex::notifyObserver() {
     }
 }
 
-bool Vertex::canBeCompletedBy(Colour /*colour*/) const {
+bool Vertex::canBeCompletedBy(Colour colour) const {
     if (isOccupied()) return false;
 
-    // No adjacent criterion may be completed (spec 3.1).
+    // For each neighbouring vertex:
     for (Vertex *v : neighbours) {
-        if (v && v->isOccupied()) {
+        if (!v || !v->isOccupied()) continue;
+
+        Colour neighbourColour = v->getOwnerColour();
+
+        // If the neighbour belongs to another player, it always blocks.
+        if (neighbourColour != colour) {
+            return false;
+        }
+
+        // If the neighbour is the same colour, only allow it to be “ignored”
+        // if there is a road (goal) owned by this colour directly between the two.
+        bool connectedByOwnedRoad = false;
+
+        for (Edge *eThis : incidentEdges) {
+            if (!eThis || eThis->getOwnerColour() != colour) continue;
+
+            // Same-class methods can access private members of other Vertex objects,
+            // so we can inspect v->incidentEdges here.
+            for (Edge *eNeighbour : v->incidentEdges) {
+                if (eNeighbour == eThis) {
+                    connectedByOwnedRoad = true;
+                    break;
+                }
+            }
+
+            if (connectedByOwnedRoad) break;
+        }
+
+        // If we have a same-colour neighbour but no owned road connecting us,
+        // it still blocks (same as before).
+        if (!connectedByOwnedRoad) {
             return false;
         }
     }
 
-    // NOTE: The “must be adjacent to your goal unless at setup” rule
-    // can be added by checking incidentEdges here against the player's
-    // colour once we pass a Player* instead of just Colour, or by providing
-    // a separate API for setup placements.
+    // All checks passed: this vertex can be completed.
     return true;
 }
 
