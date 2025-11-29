@@ -7,6 +7,11 @@ import Vertex;
 import Edge;
 import Tile;
 
+// Base class for observable objects in the game (e.g., vertices and edges).
+// Allows observers like BoardView to attach and be notified when the subject changes,
+// enabling automatic board updates without tight coupling.
+
+
 Subject::~Subject() {}
 
 void Subject::attach(Observer *observer) {
