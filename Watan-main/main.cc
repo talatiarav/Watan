@@ -13,6 +13,11 @@ import SaveManager;
 import Resources;
 import Colour;
 
+// Entry point of the program. Parses command-line options (-seed, -load, -board),
+// initializes the game state, and starts the game loop through the GameController.
+// Responsible only for setup and handing control off to the controller.
+
+
 // Helper to map layout file resource codes to Resources.
 // 0 = CAFFEINE, 1 = LAB, 2 = LECTURE, 3 = STUDY, 4 = TUTORIAL, 5 = NETFLIX
 static Resources codeToResource(int code) {
