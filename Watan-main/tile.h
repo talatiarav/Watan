@@ -1,10 +1,10 @@
-#ifndef TILE_H
-#define TILE_H
+export module Tile;
 
-#include <vector>
-#include <string>
-#include "subject.h"
-#include "resources.h"
+import <vector>;
+import <string>;
+
+import Subject;
+import Resources;
 
 // Forward declarations
 class Vertex;
@@ -17,7 +17,7 @@ enum class Colour : int;
  * Represents a resource-producing hexagonal tile on the game board.
  * Inherits from Subject to support the Observer pattern.
  */
-class Tile : public Subject {
+export class Tile : public Subject {
     int id;
     int value;
     Resources resource;
@@ -40,5 +40,3 @@ public:
     std::string playersToStealFrom(Colour active) const;
     void addVertex(Vertex* v);
 };
-
-#endif // TILE_H
