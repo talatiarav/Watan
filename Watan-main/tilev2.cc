@@ -1,10 +1,14 @@
+module Tile;
 
-// tile.cc
-#include "tile.h"
-#include "vertex.h"
-#include "player.h"
-#include <algorithm>
-#include <sstream>
+import <algorithm>;
+import <sstream>;
+
+import Tile;
+import Vertex;
+import Player;
+import Assessment;
+import Resources;
+import Colour;
 
 // Constructor: initialize tile with given id, resource type, and dice value
 Tile::Tile(int id, Resources resource, int value)
