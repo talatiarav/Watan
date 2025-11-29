@@ -1,15 +1,15 @@
-#include "gamecontroller.h"
+module GameController;
 
-#include <iostream>
-#include <sstream>
-#include <stdexcept>
-#include <limits>
-#include <random>
+import <iostream>;
+import <sstream>;
+import <stdexcept>;
+import <limits>;
+import <random>;
 
-#include "gameboard.h"
-#include "savemanager.h"
-#include "resources.h"
-
+import GameBoard;
+import SaveManager;
+import Resources;
+import Colour;
 
 using std::endl;
 
@@ -87,7 +87,7 @@ void GameController::setupInitialAssignments(std::istream &in, std::ostream &out
     for (Colour c : order) {
         while (true) {
             out << "Student " << colourToString(c)
-                << ", where do you want to complete the assignment?" << std::endl;
+                << ", where do you want to complete the assignment?" << endl;
             out << "> ";
 
             int vertexId;
@@ -95,14 +95,14 @@ void GameController::setupInitialAssignments(std::istream &in, std::ostream &out
                 // bad input (EOF or non-integer)
                 in.clear();
                 in.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-                out << "Invalid input. Please enter an intersection id." << std::endl;
+                out << "Invalid input. Please enter an intersection id." << endl;
                 continue;
             }
 
             try {
                 board.placeInitialAssignment(c, vertexId);
             } catch (const std::exception &e) {
-                out << e.what() << std::endl;
+                out << e.what() << endl;
                 // re-prompt same student
                 continue;
             }
@@ -192,7 +192,7 @@ void GameController::handleCommand(const std::string &line,
         try {
             tileId = std::stoi(cmd);
         } catch (...) {
-            out << "Invalid tile. Please enter a tile number." << std::endl;
+            out << "Invalid tile. Please enter a tile number." << endl;
             return; // stay in geese mode, ask again next loop
         }
 
@@ -200,7 +200,7 @@ void GameController::handleCommand(const std::string &line,
             cmdGeese(tileId, in, out);   // this should call board.moveGeese(...)
             awaitingGeesePlacement = false;
         } catch (const std::exception &e) {
-            out << e.what() << std::endl;
+            out << e.what() << endl;
             // still waiting for a valid tile, so don't clear the flag
         }
 
@@ -215,14 +215,14 @@ void GameController::handleCommand(const std::string &line,
 
     // Spec 4.2 / 4.3: you must roll before building or trading.
     if (!rolledThisTurn && isBuildOrTradeCommand(cmd)) {
-        out << "You must roll before building or trading." << std::endl;
+        out << "You must roll before building or trading." << endl;
         return;
     }
 
     // Spec 4.2: load/fair are beginning-of-turn choices; once you've rolled,
     // you shouldn't be able to change dice type for this turn.
     if (rolledThisTurn && (cmd == "load" || cmd == "fair")) {
-        out << "You must choose your dice before rolling." << std::endl;
+        out << "You must choose your dice before rolling." << endl;
         return;
     }
 
@@ -244,7 +244,7 @@ void GameController::handleCommand(const std::string &line,
     } else if (cmd == "trade") {
         std::string targetStr, giveStr, takeStr;
         if (!(iss >> targetStr >> giveStr >> takeStr)) {
-            out << "Usage: trade <player>|bank <give> <take>\n";
+            out << "Usage: trade <player>|bank <give> <take>" << endl;
             return;
         }
         cmdTrade(targetStr, giveStr, takeStr, in, out);
@@ -302,16 +302,16 @@ void GameController::handleCommand(const std::string &line,
 // --- individual commands ---
 
 void GameController::cmdHelp(std::ostream &out) const {
-    out << "Valid commands:\n"
-        << "board\n"
-        << "status\n"
-        << "criteria\n"
-        << "achieve <goal>\n"
-        << "complete <criterion>\n"
-        << "improve <criterion>\n"
-        << "trade <colour> <give> <take>\n"
-        << "next\n"
-        << "save <file>\n"
+    out << "Valid commands:" << endl
+        << "board" << endl
+        << "status" << endl
+        << "criteria" << endl
+        << "achieve <goal>" << endl
+        << "complete <criterion>" << endl
+        << "improve <criterion>" << endl
+        << "trade <colour> <give> <take>" << endl
+        << "next" << endl
+        << "save <file>" << endl
         << "help" << endl;
 }
 
@@ -348,18 +348,18 @@ void GameController::cmdRoll(std::istream &in, std::ostream &out) {
     if (p->isLoadedDice()) {
         int toLoad;
         while (true) {
-            out << "Input a roll between 2 and 12:" << std::endl;
+            out << "Input a roll between 2 and 12:" << endl;
             out << "> ";
             if (!(in >> toLoad)) {
                 // bad input: clear and ignore one token
                 in.clear();
                 std::string junk;
                 in >> junk;
-                out << "Invalid input." << std::endl;
+                out << "Invalid input." << endl;
                 continue;
             }
             if (toLoad < 2 || toLoad > 12) {
-                out << "Invalid roll." << std::endl;
+                out << "Invalid roll." << endl;
                 continue;
             }
             break;
@@ -383,7 +383,7 @@ void GameController::cmdRoll(std::istream &in, std::ostream &out) {
 
 void GameController::cmdGeese(int tileId, std::istream &in, std::ostream &out) {
     if (!awaitingGeesePlacement) {
-        out << "You may only move the GEESE immediately after rolling a 7." << std::endl;
+        out << "You may only move the GEESE immediately after rolling a 7." << endl;
         return;
     }
 
@@ -397,7 +397,7 @@ void GameController::cmdGeese(int tileId, std::istream &in, std::ostream &out) {
     if (stealable.empty()) {
         // Edge case: no one else here has resources.
         out << "Student " << colourToString(currentPlayer)
-            << " has no students to steal from." << std::endl;
+            << " has no students to steal from." << endl;
         awaitingGeesePlacement = false;
         return;
     }
@@ -409,10 +409,10 @@ void GameController::cmdGeese(int tileId, std::istream &in, std::ostream &out) {
         if (i > 0) out << ", ";
         out << colourToString(stealable[i]);
     }
-    out << "." << std::endl;
+    out << "." << endl;
 
     // Ask which student to steal from.
-    out << "Choose a student to steal from." << std::endl;
+    out << "Choose a student to steal from." << endl;
     out << "> ";
 
     Colour targetColour;
@@ -426,7 +426,7 @@ void GameController::cmdGeese(int tileId, std::istream &in, std::ostream &out) {
         }
 
         if (!parseColour(targetStr, targetColour)) {
-            out << "Invalid player. Valid players: Blue, Red, Orange, Yellow" << std::endl;
+            out << "Invalid player. Valid players: Blue, Red, Orange, Yellow" << endl;
         } else {
             bool isAllowed = false;
             for (Colour c : stealable) {
@@ -436,7 +436,7 @@ void GameController::cmdGeese(int tileId, std::istream &in, std::ostream &out) {
                 }
             }
             if (!isAllowed) {
-                out << "You must choose a student from the list." << std::endl;
+                out << "You must choose a student from the list." << endl;
             } else {
                 break;  // valid choice
             }
@@ -457,7 +457,7 @@ void GameController::cmdGeese(int tileId, std::istream &in, std::ostream &out) {
     if (totalRes <= 0) {
         // Should not happen because we filtered on resources, but be safe.
         out << "Student " << colourToString(currentPlayer)
-            << " has no students to steal from." << std::endl;
+            << " has no students to steal from." << endl;
         awaitingGeesePlacement = false;
         return;
     }
@@ -483,7 +483,7 @@ void GameController::cmdGeese(int tileId, std::istream &in, std::ostream &out) {
 
     if (pool.empty()) {
         out << "Student " << colourToString(currentPlayer)
-            << " has no students to steal from." << std::endl;
+            << " has no students to steal from." << endl;
         awaitingGeesePlacement = false;
         return;
     }
@@ -500,7 +500,7 @@ void GameController::cmdGeese(int tileId, std::istream &in, std::ostream &out) {
 
     out << "Student " << colourToString(currentPlayer)
         << " steals " << resourceToSpecName(stolen)
-        << " from student " << colourToString(targetColour) << "." << std::endl;
+        << " from student " << colourToString(targetColour) << "." << endl;
 
     // Clear to end of line so the next getline in run() is clean.
     in.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
@@ -539,7 +539,7 @@ void GameController::cmdAchieve(int edgeId, std::ostream &out) {
     }
 }
 
-// --- save
+// --- save ---
 
 void GameController::cmdSave(const std::string &filename, std::ostream &out) {
     try {
@@ -561,17 +561,17 @@ void GameController::cmdTrade(const std::string &targetStr,
     if (targetStr == "bank" || targetStr == "Bank") {
         bankTrade = true;
     } else if (!parseColour(targetStr, otherColour)) {
-        out << "Invalid player. Valid players: Blue, Red, Orange, Yellow, bank\n";
+        out << "Invalid player. Valid players: Blue, Red, Orange, Yellow, bank" << endl;
         return;
     }
 
     Resources give, take;
     if (!parseResource(giveStr, give)) {
-        out << "Invalid resource to give. Valid: Caffeine, Lab, Lecture, Study, Tutorial\n";
+        out << "Invalid resource to give. Valid: Caffeine, Lab, Lecture, Study, Tutorial" << endl;
         return;
     }
     if (!parseResource(takeStr, take)) {
-        out << "Invalid resource to take. Valid: Caffeine, Lab, Lecture, Study, Tutorial\n";
+        out << "Invalid resource to take. Valid: Caffeine, Lab, Lecture, Study, Tutorial" << endl;
         return;
     }
 
@@ -584,41 +584,41 @@ void GameController::cmdTrade(const std::string &targetStr,
     if (bankTrade) {
         if (me->getResourceCount(give) < 4) {
             out << "Student " << currentPlayer << " does not have enough "
-                << give << " to trade with the bank. Trade unsuccessful.\n";
+                << give << " to trade with the bank. Trade unsuccessful." << endl;
             return;
         }
 
         out << "Student " << currentPlayer << " wants to trade four " << give
-            << " for one " << take << " with the bank. Confirm this trade?\n";
+            << " for one " << take << " with the bank. Confirm this trade?" << endl;
         out << "> ";
 
         std::string answer;
         in >> answer;
         while (answer != "yes" && answer != "no") {
-            out << "Please confirm with yes or no.\n";
+            out << "Please confirm with yes or no." << endl;
             out << "> ";
             in >> answer;
         }
         if (answer == "no") {
-            out << "Trade unsuccessful.\n";
+            out << "Trade unsuccessful." << endl;
             return;
         }
 
         me->removeResource(give, 4);
         me->addResource(take, 1);
-        out << "Trade successful.\n";
+        out << "Trade successful." << endl;
         return;
     }
 
     // ----- Player-to-player trade -----
     if (otherColour == currentPlayer) {
-        out << "You cannot trade with yourself.\n";
+        out << "You cannot trade with yourself." << endl;
         return;
     }
 
     Player *other = board.getPlayer(otherColour);
     if (!other) {
-        out << "Unknown player.\n";
+        out << "Unknown player." << endl;
         return;
     }
 
@@ -646,7 +646,7 @@ void GameController::cmdTrade(const std::string &targetStr,
         in >> answer;
     }
     if (answer == "no") {
-        out << "Trade unsuccessful.\n";
+        out << "Trade unsuccessful." << endl;
         return;
     }
 
@@ -657,7 +657,7 @@ void GameController::cmdTrade(const std::string &targetStr,
     other->removeResource(take, 1);
     me->addResource(take, 1);
 
-    out << "Trade successful.\n";
+    out << "Trade successful." << endl;
 }
 
 
@@ -678,7 +678,7 @@ void GameController::cmdSetFairDice(std::ostream &out) {
         throw std::runtime_error("fair: unknown current player.");
     }
     p->useFairDice();
-    out << "Using fair dice this turn." << std::endl;
+    out << "Using fair dice this turn." << endl;
 }
 
 void GameController::cmdSetLoadedDice(std::ostream &out) {
@@ -687,7 +687,7 @@ void GameController::cmdSetLoadedDice(std::ostream &out) {
         throw std::runtime_error("load: unknown current player.");
     }
     p->useLoadedDice();
-    out << "Using loaded dice this turn." << std::endl;
+    out << "Using loaded dice this turn." << endl;
 }
 
 void GameController::saveBackupOnEOF(std::ostream &out) {
@@ -697,10 +697,10 @@ void GameController::saveBackupOnEOF(std::ostream &out) {
             advancePlayer();
         }
         saver.saveGame(board, currentPlayer, "backup.sv");
-        out << "Game ended unexpectedly, saving game to backup.sv." << std::endl;
+        out << "Game ended unexpectedly, saving game to backup.sv." << endl;
     } catch (const std::exception &e) {
         // If something goes wrong, at least say so.
         out << "Game ended unexpectedly; failed to save backup.sv: "
-            << e.what() << std::endl;
+            << e.what() << endl;
     }
 }
