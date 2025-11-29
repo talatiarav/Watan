@@ -1,6 +1,8 @@
-#include "fair.h"
-#include <stdlib.h>
-#include <iostream>
+module Fair;
+
+import <stdlib.h>;
+import <iostream>;
+
 using namespace std;
 
 // 2.8
@@ -18,5 +20,5 @@ int Fair::roll() {
   dice1 = rand() % 6 + 1;
   dice2 = rand() % 6 + 1;
   std::cout << "Dice rolled: " << dice1 + dice2 << std::endl;
-	return dice1 + dice2;
+  return dice1 + dice2;
 }
