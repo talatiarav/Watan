@@ -1,23 +1,20 @@
-#ifndef GAMEBOARD_H
-#define GAMEBOARD_H
+export module GameBoard;
 
-#include <iosfwd>
-#include <memory>
-#include <vector>
+import <iosfwd>;
+import <memory>;
+import <vector>;
+import <string>;
 
-// Forward declarations of enums
-enum class Colour;
-enum class Resources;
-enum class Assessment;
+import Colour;
+import Resources;
+import Assessment;
+import Player;
+import Tile;
+import Vertex;
+import Edge;
+import BoardView;
 
-// Forward declarations of core classes
-#include "player.h"
-#include "tile.h"
-#include "vertex.h"
-#include "edge.h"
-#include "boardview.h"
-
-class GameBoard {
+export class GameBoard {
 public:
     // Construct from explicit tile values/resources (size 19 each).
     GameBoard(bool enhance,
@@ -68,8 +65,6 @@ public:
     Player *getPlayer(Colour colour);
     const Player *getPlayer(Colour colour) const;
 
-
-
 private:
     // Players are always in fixed order: Blue, Red, Orange, Yellow.
     std::vector<std::unique_ptr<Player>> players;
@@ -116,5 +111,3 @@ private:
     Edge *getEdge(int edgeId);
     const Edge *getEdge(int edgeId) const;
 };
-
-#endif // GAMEBOARD_H
