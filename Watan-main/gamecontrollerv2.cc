@@ -92,11 +92,7 @@ void GameController::setupInitialAssignments(std::istream &in, std::ostream &out
 
             int vertexId;
             if (!(in >> vertexId)) {
-                // Check if this is EOF (end of input)
-                if (in.eof()) {
-                    throw std::runtime_error("Unexpected end of input during initial setup.");
-                }
-                // Otherwise it's just bad input (non-integer)
+                // bad input (EOF or non-integer)
                 in.clear();
                 in.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
                 out << "Invalid input. Please enter an intersection id." << std::endl;
@@ -142,11 +138,15 @@ void GameController::advancePlayer() {
 
 // --- main loop ---
 
-bool GameController::run(std::istream &in, std::ostream &out) {
-    setupInitialAssignments(in, out);
+void GameController::run(std::istream &in, std::ostream &out, bool loadedFile) {
+    if (!loadedFile) {
+        setupInitialAssignments(in, out);
+    }
     startNewTurn(out);
 
     std::string line;
+    bool eofOccured = false;
+
     while (!quitRequested && !board.hasWinner() && std::getline(in, line)) {
         if (line.empty()) continue;
 
@@ -161,34 +161,19 @@ bool GameController::run(std::istream &in, std::ostream &out) {
         // If winner was detected inside a command, we drop out of loop next iteration.
     }
 
+    if (in.eof()) {
+        eofOccured = true;
+        saveBackupOnEOF(out);
+    }
+
     if (board.hasWinner()) {
         Colour winner = board.getWinner();
         out << "Student " << colourToString(winner) << " wins the game!" << endl;
-        
-        // Prompt for replay
-        out << "Would you like to play again?" << endl;
-        std::string response;
-        if (std::getline(in, response)) {
-            size_t start = response.find_first_not_of(" \t\r\n");
-            size_t end = response.find_last_not_of(" \t\r\n");
-            if (start != std::string::npos && end != std::string::npos) {
-                response = response.substr(start, end - start + 1);
-            }
-            for (char &c : response) {
-                c = std::tolower(c);
-            }
-            
-            if (response == "yes") {
-                return true;  // Play again
-            }
-        }
-        return false;  // Don't play again
     } else if (quitRequested) {
         out << "Game ended by user." << endl;
-        return false;  // Don't play again
+    } else if (!eofOccured) {
+        out << "Input error occured" << endl;
     }
-    
-    return false;  // EOF or other exit condition
 }
 
 // --- command parsing ---
@@ -220,6 +205,25 @@ void GameController::handleCommand(const std::string &line,
         }
 
         return; // don't treat this as a normal command
+    }
+
+    // Commands that *logically* belong to the "after roll" phase.
+    auto isBuildOrTradeCommand = [](const std::string &c) {
+        return c == "achieve" || c == "complete" ||
+               c == "improve" || c == "trade";
+    };
+
+    // Spec 4.2 / 4.3: you must roll before building or trading.
+    if (!rolledThisTurn && isBuildOrTradeCommand(cmd)) {
+        out << "You must roll before building or trading." << std::endl;
+        return;
+    }
+
+    // Spec 4.2: load/fair are beginning-of-turn choices; once you've rolled,
+    // you shouldn't be able to change dice type for this turn.
+    if (rolledThisTurn && (cmd == "load" || cmd == "fair")) {
+        out << "You must choose your dice before rolling." << std::endl;
+        return;
     }
 
     // Normalize to lowercase if you want; for now assume lower-case input.
@@ -305,8 +309,7 @@ void GameController::cmdHelp(std::ostream &out) const {
         << "achieve <goal>\n"
         << "complete <criterion>\n"
         << "improve <criterion>\n"
-        // trade not yet implemented in this refactor:
-        // << "trade <colour> <give> <take>\n"
+        << "trade <colour> <give> <take>\n"
         << "next\n"
         << "save <file>\n"
         << "help" << endl;
@@ -485,9 +488,8 @@ void GameController::cmdGeese(int tileId, std::istream &in, std::ostream &out) {
         return;
     }
 
-    // Use std::rand() to seed the mt19937 engine
-    // This way it respects the global seed set by std::srand() in main
-    std::mt19937 gen(std::rand());
+    std::random_device rd;
+    std::mt19937 gen(rd());
     std::uniform_int_distribution<> dist(0, static_cast<int>(pool.size() - 1));
 
     Resources stolen = pool[dist(gen)];
@@ -622,24 +624,24 @@ void GameController::cmdTrade(const std::string &targetStr,
 
     if (me->getResourceCount(give) < 1) {
         out << "Student " << currentPlayer << " does not have enough "
-            << give << " to trade. Trade unsuccessful.\n";
+            << give << " to trade. Trade unsuccessful." << endl;
         return;
     }
     if (other->getResourceCount(take) < 1) {
         out << "Student " << otherColour << " does not have enough "
-            << take << " to trade. Trade unsuccessful.\n";
+            << take << " to trade. Trade unsuccessful." << endl;
         return;
     }
 
     out << "Student " << currentPlayer << " offers Student " << otherColour
-        << " one " << give << " for one " << take
-        << ". Does Student " << otherColour << " accept this offer?\n";
+        << " one " << give << " for one " << take << endl;
+    out << ". Does Student " << otherColour << " accept this offer?" << endl;
     out << "> ";
 
     std::string answer;
     in >> answer;
     while (answer != "yes" && answer != "no") {
-        out << "Please accept or decline the trade offer with yes or no.\n";
+        out << "Please accept or decline the trade offer with yes or no." << endl;
         out << "> ";
         in >> answer;
     }
@@ -686,4 +688,19 @@ void GameController::cmdSetLoadedDice(std::ostream &out) {
     }
     p->useLoadedDice();
     out << "Using loaded dice this turn." << std::endl;
+}
+
+void GameController::saveBackupOnEOF(std::ostream &out) {
+    try {
+        SaveManager saver;
+        if (rolledThisTurn) {
+            advancePlayer();
+        }
+        saver.saveGame(board, currentPlayer, "backup.sv");
+        out << "Game ended unexpectedly, saving game to backup.sv." << std::endl;
+    } catch (const std::exception &e) {
+        // If something goes wrong, at least say so.
+        out << "Game ended unexpectedly; failed to save backup.sv: "
+            << e.what() << std::endl;
+    }
 }
