@@ -1,0 +1,4 @@
+output1.txt
+*.exe
+*.o
+*.d
