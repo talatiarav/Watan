@@ -21,7 +21,11 @@ import BoardView;
 using std::cout;
 using std::endl;
 
-// ---------- Construction ----------
+// Manages all core game logic and state for the Watan board.
+// Tracks tiles, vertices, edges, resources, geese position, and player actions.
+// Provides the rules for completing/improving criteria, achieving goals,
+// distributing resources, moving geese, and updating the BoardView.
+
 
 GameBoard::GameBoard(bool enhance,
                      const std::vector<int> &values,
@@ -75,7 +79,7 @@ GameBoard GameBoard::createRandom(bool enhance) {
         12
     };
 
-    // 19 resource tiles, including one Netflix (desert).
+    // 19 resource tiles, including one Netflix
     std::vector<Resources> resTypes = {
         Resources::Tutorial, Resources::Tutorial, Resources::Tutorial,
         Resources::Study,    Resources::Study,    Resources::Study,
@@ -95,7 +99,7 @@ GameBoard GameBoard::createRandom(bool enhance) {
     // Shuffle resources first
     std::shuffle(resTypes.begin(), resTypes.end(), gen);
 
-    // Find the Netflix (desert) tile index
+    // Find the Netflix  tile index
     int netflixIndex = -1;
     for (int i = 0; i < static_cast<int>(resTypes.size()); ++i) {
         if (resTypes[i] == Resources::Netflix) {
@@ -115,7 +119,7 @@ GameBoard GameBoard::createRandom(bool enhance) {
     int chitPos = 0;
     for (int i = 0; i < static_cast<int>(values.size()); ++i) {
         if (i == netflixIndex) {
-            values[i] = 0;            // desert / Netflix has no number
+            values[i] = 0;            
         } else {
             values[i] = chits[chitPos++];
         }
@@ -129,7 +133,7 @@ void GameBoard::initializePlayers() {
     players.clear();
     players.reserve(4);
 
-    // Fixed order: Blue, Red, Orange, Yellow (spec and old Board).
+    // Fixed order: Blue, Red, Orange, Yellow 
     players.emplace_back(std::make_unique<Player>(Colour::Blue));
     players.emplace_back(std::make_unique<Player>(Colour::Red));
     players.emplace_back(std::make_unique<Player>(Colour::Orange));
@@ -143,7 +147,6 @@ void GameBoard::initializeBoardGraph(const std::vector<int> &values,
     tiles.clear();
     tiles.reserve(values.size());
     for (size_t i = 0; i < values.size(); ++i) {
-        // you’ll likely want to add a tile ID parameter later
         int id = static_cast<int>(i);
         tiles.emplace_back(std::make_unique<Tile>(id, resources[i], values[i]));
     }
@@ -156,12 +159,9 @@ void GameBoard::initializeBoardGraph(const std::vector<int> &values,
     //    since 3n^2 + 3n + 1 = 19 tiles ⇒ n = 2.
     const int n = 2;
 
-    // These mirror the old vector<vector<Criterion>> / vector<vector<Goal>>,
-    // but now hold Vertex* and Edge* instead of unique_ptrs.
     std::vector<std::vector<Vertex *>> vertexRows;
     std::vector<std::vector<Edge   *>> edgeRows;
 
-    // These will fill GameBoard::vertices and GameBoard::edges.
     vertices.clear();
     edges.clear();
 
@@ -173,7 +173,6 @@ void GameBoard::initializeBoardGraph(const std::vector<int> &values,
     //    know which Tiles it touches.
     wireTiles(n);
 
-    // NEW: wire edge neighbours so roads can extend along your network
     for (auto &vPtr : vertices) {
         Vertex *v = vPtr.get();
         const auto &inc = v->getIncidentEdges();
@@ -193,7 +192,6 @@ void GameBoard::initializeBoardGraph(const std::vector<int> &values,
     geeseTile = -1;
 }
 
-// ---------- Core game actions ----------
 
 int GameBoard::rollDice(Colour activePlayer) {
     Player *p = findPlayer(activePlayer);
@@ -226,7 +224,6 @@ int GameBoard::rollDice(Colour activePlayer) {
         return roll;
     }
 
-    // --- Snapshot resources BEFORE distribution ---
     // Only the 5 real resources; ignore Netflix/None.
     const Resources tracked[5] = {
         Resources::Caffeine,
@@ -252,7 +249,6 @@ int GameBoard::rollDice(Colour activePlayer) {
         }
     }
 
-    // --- Compute deltas and print per student in colour order ---
     bool anyGained = false;
     const Colour order[4] = {
         Colour::Blue, Colour::Red, Colour::Orange, Colour::Yellow
@@ -300,7 +296,6 @@ void GameBoard::placeInitialAssignment(Colour playerColour, int vertexId) {
         throw std::runtime_error("placeInitialAssignment: invalid vertex id.");
     }
 
-    // Still enforce adjacency/ownership rules, but ignore resources.
     if (!v->canBeCompletedBy(playerColour)) {
         throw std::runtime_error("You cannot build here.");
     }
@@ -331,7 +326,6 @@ void GameBoard::completeVertex(Colour playerColour, int vertexId) {
     }
 
     if (!hasAdjacentOwnedGoal) {
-        // We are not in the setup phase here, so we must enforce the road rule.
         throw std::runtime_error("You cannot build here.");
     }
 
@@ -374,7 +368,6 @@ void GameBoard::improveVertex(Colour playerColour, int vertexId) {
             next = Assessment::Exam;
             break;
         default:
-            // None or Exam can't be improved
             throw std::runtime_error("You cannot build here.");
     }
 
@@ -428,7 +421,6 @@ void GameBoard::moveGeese(Colour /*activePlayer*/, int tileId) {
     }
 }
 
-// ---------- Topology helpers (rows / edges) ----------
 
 void GameBoard::setupRows(int n,
                           std::vector<std::vector<Vertex *>> &vertexRows,
@@ -442,12 +434,10 @@ void GameBoard::setupRows(int n,
 
     int patternedRow = (2 * n) + 2;
 
-    int k = 1; // horizontal goal counter
+    int k = 1; 
 
-    // First band of rows (top)
     for (int i = 0; i < patternedRow; ++i) {
         if (i % 2 == 0) {
-            // even rows: k edges, 2k vertices
             for (int j = 0; j < k; ++j) {
                 int edgeId = static_cast<int>(edges.size());
                 auto e = std::make_unique<Edge>(edgeId);
@@ -464,7 +454,6 @@ void GameBoard::setupRows(int n,
                 vertices.emplace_back(std::move(v));
             }
         } else {
-            // odd rows: 2k edges, no vertices
             for (int j = 0; j < (2 * k); ++j) {
                 int edgeId = static_cast<int>(edges.size());
                 auto e = std::make_unique<Edge>(edgeId);
@@ -477,9 +466,8 @@ void GameBoard::setupRows(int n,
     }
 
     int secondPatternedRow = (6 * n) + 3;
-    int temp = n; // number of edges in patternedRow
+    int temp = n; 
 
-    // Middle band
     for (int i = patternedRow; i < secondPatternedRow; ++i) {
         if (i % 2 == 0) {
             // even rows: temp edges, (2n+2) vertices
@@ -514,7 +502,7 @@ void GameBoard::setupRows(int n,
     }
 
     // Last band (bottom)
-    --k; // horizontal goal counter
+    --k; 
     for (int i = secondPatternedRow; i < rows; ++i) {
         if (i % 2 != 0) {
             // odd rows: 2k edges
@@ -526,7 +514,6 @@ void GameBoard::setupRows(int n,
                 edges.emplace_back(std::move(e));
             }
         } else {
-            // even rows: k edges, 2k vertices
             for (int j = 0; j < k; ++j) {
                 int edgeId = static_cast<int>(edges.size());
                 auto e = std::make_unique<Edge>(edgeId);
@@ -594,7 +581,6 @@ void GameBoard::wireRows(int n,
         }
     }
 
-    // Middle band
     int secondPatternedRow = (6 * n) + 3;
     for (int i = patternedRow; i <= secondPatternedRow; ++i) {
         int size = static_cast<int>(edgeRows[i].size());
@@ -640,7 +626,6 @@ void GameBoard::wireRows(int n,
     }
 }
 
-// ---------- Tile–vertex wiring (ported from updateCriterionsInTile) ----------
 
 void GameBoard::addVerticesForTile(int &vertexIndex, int tileId) {
     // helper analogous to Board::criterionAdderHelper
@@ -663,8 +648,6 @@ void GameBoard::addVerticesForTile(int &vertexIndex, int tileId) {
 }
 
 void GameBoard::wireTiles(int n) {
-    // This function mirrors the old Board::updateCriterionsInTile(n)
-    // but uses Vertex / Tile instead of Criterion / Tile.
 
     int patternStartsAt = (n * (n + 1)) / 2; // tile index
     double secondPattern = ((n * n) / 2.0) + ((3 * n) / 2.0) + 1;
@@ -809,7 +792,6 @@ void GameBoard::wireTiles(int n) {
     }
 }
 
-// ---------- Printing / queries ----------
 
 void GameBoard::printBoard(std::ostream &out) const {
     if (view) {
@@ -904,7 +886,6 @@ std::string GameBoard::encodeBoardLayoutForSave() const {
 }
 
 
-// ---------- Private helpers ----------
 
 Player *GameBoard::findPlayer(Colour colour) {
     for (auto &p : players) {
