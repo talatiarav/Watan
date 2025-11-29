@@ -10,10 +10,7 @@ class Vertex;
 class Edge;
 class Tile;
 
-/**
- * Observer interface for classes that need to react to Subject updates.
- * BoardView implements this interface to display changes in the game board.
- */
+
 export class Observer {
 public:
     virtual ~Observer() = default;
