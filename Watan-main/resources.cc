@@ -1,5 +1,6 @@
-#include "resources.h"
-#include <iostream>
+module Resources;
+
+import <iostream>;
 
 std::ostream &operator<<(std::ostream &out, Resources resource) {
     switch (resource) {
